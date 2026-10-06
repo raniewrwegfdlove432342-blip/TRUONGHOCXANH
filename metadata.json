@@ -1,0 +1,8 @@
+{
+  "name": "Lá Chắn Học Đường - Phòng Chống Tệ Nạn & Báo Cáo Ẩn Danh",
+  "description": "Nền tảng giáo dục phòng chống ma túy, bạo lực học đường, thuốc lá & thuốc lá điện tử kết hợp kênh báo cáo sự việc ẩn danh an toàn và Trợ lý AI học đường.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
