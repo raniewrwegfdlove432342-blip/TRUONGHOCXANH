@@ -107,22 +107,22 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
   return (
     <div className="space-y-6 pb-24">
       {/* Header Banner */}
-      <section className="bg-linear-to-r from-blue-700 to-indigo-800 text-white rounded-3xl p-5 sm:p-6 shadow-md">
+      <section className="bg-linear-to-r from-emerald-800 via-teal-800 to-emerald-900 text-white rounded-3xl p-5 sm:p-6 shadow-md border border-emerald-700/40">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center">
-            <BookOpen className="w-5 h-5" />
+            <BookOpen className="w-5 h-5 text-emerald-200" />
           </div>
           <div>
-            <span className="text-[10px] uppercase font-bold text-blue-200 tracking-wider">
-              TÀI LIỆU CHUẨN HÓA BỘ GIÁO DỤC & BỘ CÔNG AN
+            <span className="text-[10px] uppercase font-bold text-emerald-200 tracking-wider">
+              NGUỒN BÁO CHÍ & CỔNG THÔNG TIN AN NINH MẠNG QUỐC GIA
             </span>
             <h2 className="text-lg sm:text-xl font-black">
               Cẩm Nang Nhận Diện & Phòng Ngừa Toàn Diện
             </h2>
           </div>
         </div>
-        <p className="text-xs text-blue-100 leading-relaxed">
-          Trang bị kiến thức khoa học và kỹ năng thực tế giúp học sinh THCS, THPT nhận biết sớm nguy cơ, tự bảo vệ mình và chủ động bảo vệ bạn bè.
+        <p className="text-xs text-emerald-100 leading-relaxed">
+          Tài liệu chính thống từ Bộ Công An, Báo Nhân Dân, Báo Tuổi Trẻ, Cục An toàn thông tin và Bệnh viện Bạch Mai. Giúp học sinh THCS, THPT nhận biết sớm nguy cơ, tự bảo vệ bản thân và bạn bè.
         </p>
       </section>
 
@@ -275,40 +275,71 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
       )}
 
       {/* SECTION 4: DANH SÁCH BÀI VIẾT NỔI BẬT */}
-      <section className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
-        <h3 className="text-sm font-black text-slate-900 uppercase">
-          BÀI VIẾT & PHÓNG SỰ ĐIỀU TRA HỌC ĐƯỜNG
-        </h3>
+      <section className="bg-white rounded-3xl p-5 border border-emerald-100 shadow-xs space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
+            <h3 className="text-sm font-black text-slate-900 uppercase">
+              BÀI VIẾT & PHÓNG SỰ ĐIỀU TRA HỌC ĐƯỜNG (NGUỒN BÁO MẠNG CHÍNH THỐNG)
+            </h3>
+          </div>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           {NEWS_ARTICLES.map((art) => (
             <div
               key={art.id}
-              onClick={() => onSelectArticle(art)}
-              className="p-3.5 rounded-2xl border border-slate-200 hover:border-blue-400 bg-slate-50/50 hover:bg-white transition cursor-pointer flex flex-col justify-between group"
+              className="p-4 rounded-3xl border border-slate-200 hover:border-emerald-400 bg-white hover:shadow-md transition flex flex-col justify-between group"
             >
-              <div>
-                <img
-                  src={art.imageUrl}
-                  alt={art.title}
-                  className="w-full h-32 object-cover rounded-xl mb-2.5 group-hover:scale-[1.01] transition"
-                />
-                <span className="text-[10px] font-bold text-blue-600 uppercase">
-                  {art.categoryLabel}
-                </span>
-                <h4 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug line-clamp-2 mt-0.5">
+              <div onClick={() => onSelectArticle(art)} className="cursor-pointer">
+                <div className="relative rounded-2xl overflow-hidden mb-3 aspect-video bg-slate-900">
+                  <img
+                    src={art.imageUrl}
+                    alt={art.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                  />
+                  <span className="absolute top-2 left-2 bg-emerald-700/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-xs flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-300" />
+                    <span>{art.verifiedBadge || art.sourceName}</span>
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 text-[10px] text-slate-500 mb-1">
+                  <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    {art.categoryLabel}
+                  </span>
+                  <span>•</span>
+                  <span>{art.date}</span>
+                </div>
+
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-emerald-700 transition leading-snug line-clamp-2 mt-0.5">
                   {art.title}
                 </h4>
-                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
+                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
                   {art.summary}
                 </p>
               </div>
 
-              <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
-                <span>{art.date}</span>
-                <span className="font-bold text-blue-600 flex items-center gap-1">
-                  Đọc tiếp ➔
-                </span>
+              <div className="mt-3.5 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+                <button
+                  onClick={() => onSelectArticle(art)}
+                  className="font-bold text-emerald-700 hover:underline flex items-center gap-1 text-[11px]"
+                >
+                  <span>Chi tiết</span> ➔
+                </button>
+
+                {art.sourceUrl && (
+                  <a
+                    href={art.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold transition flex items-center gap-1 border border-emerald-200"
+                    title="Mở bài viết trực tiếp tại nguồn báo an ninh mạng"
+                  >
+                    <span>Nguồn báo</span>
+                    <ExternalLink className="w-3 h-3 text-emerald-600" />
+                  </a>
+                )}
               </div>
             </div>
           ))}

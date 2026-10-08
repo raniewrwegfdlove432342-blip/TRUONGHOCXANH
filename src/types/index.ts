@@ -1,4 +1,50 @@
-export type ActiveTab = 'home' | 'knowledge' | 'quiz' | 'games' | 'video' | 'report' | 'ai';
+export type ActiveTab = 'home' | 'knowledge' | 'quiz' | 'games' | 'report' | 'ai' | 'student-videos';
+
+export interface UserAccount {
+  id: string;
+  username: string;
+  fullName: string;
+  role: 'admin' | 'student' | 'teacher';
+  school: string;
+  gradeClass?: string;
+  email?: string;
+  avatarUrl?: string;
+  createdAt: string;
+}
+
+export interface StudentVideo {
+  id: string;
+  title: string;
+  authorName: string;
+  studentGrade: string;
+  school: string;
+  category: 'drugs' | 'violence' | 'tobacco' | 'vape' | 'friendship';
+  categoryLabel: string;
+  videoUrl?: string;
+  driveUrl?: string;
+  fileType?: 'video' | 'image';
+  thumbnailUrl?: string;
+  description: string;
+  duration?: string;
+  likes: number;
+  views: number;
+  status: 'approved' | 'pending';
+  uploadedAt: string;
+  syncedToGoogleSheet?: boolean;
+}
+
+export interface GoogleSheetSyncStatus {
+  sheetName: string;
+  spreadsheetId?: string;
+  sheetUrl?: string;
+  webhookUrl?: string;
+  lastSyncedAt?: string;
+  totalAccountsSynced: number;
+  totalReportsSynced: number;
+  totalVideosSynced: number;
+  status: 'connected' | 'demo_ready' | 'syncing';
+  syncLog: { id: string; timestamp: string; action: string; count: number }[];
+}
 
 export interface PillarItem {
   id: string;
@@ -41,6 +87,9 @@ export interface NewsArticle {
   content: string[];
   tips: string[];
   badge?: string;
+  sourceName: string;
+  sourceUrl: string;
+  verifiedBadge?: string;
 }
 
 export interface EducationalVideo {
@@ -48,6 +97,8 @@ export interface EducationalVideo {
   title: string;
   duration: string;
   source: string;
+  sourceUrl: string;
+  verifiedBadge?: string;
   category: string;
   thumbnailUrl: string;
   youtubeId?: string;

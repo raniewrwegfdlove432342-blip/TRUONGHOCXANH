@@ -220,7 +220,7 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
                 </span>
               </div>
               <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-3">
-                TRƯỜNG HỌC XANH - AN TOÀN - KHÔNG MA TÚY - KHÔNG BẠO LỰC
+                TRƯỜNG HỌC XANH - AN TOÀN - NÓI KHÔNG VỚI CHẤT GÂY NGHIỆN & BẠO LỰC
               </div>
 
               <div className="text-xs uppercase text-amber-700 font-bold tracking-widest">

@@ -1,6 +1,22 @@
 import React, { useState } from 'react';
-import { Shield, PhoneCall, AlertTriangle, HelpCircle, Lock, Menu, X, Sparkles, UserCheck } from 'lucide-react';
-import { ActiveTab } from '../types';
+import {
+  Shield,
+  PhoneCall,
+  AlertTriangle,
+  HelpCircle,
+  Lock,
+  Menu,
+  X,
+  Sparkles,
+  UserCheck,
+  User,
+  LogOut,
+  FileSpreadsheet,
+  Film,
+  GraduationCap,
+  School,
+} from 'lucide-react';
+import { ActiveTab, UserAccount } from '../types';
 
 interface HeaderProps {
   activeTab: ActiveTab;
@@ -8,6 +24,10 @@ interface HeaderProps {
   onOpenCommitment: () => void;
   isAdminMode: boolean;
   setIsAdminMode: (val: boolean) => void;
+  currentUser: UserAccount | null;
+  onOpenAuth: () => void;
+  onLogout: () => void;
+  onOpenGoogleSheetSync: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -16,43 +36,67 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCommitment,
   isAdminMode,
   setIsAdminMode,
+  currentUser,
+  onOpenAuth,
+  onLogout,
+  onOpenGoogleSheetSync,
 }) => {
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   return (
     <>
       {/* Top Banner & Main Header */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-xs">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-emerald-100 shadow-xs">
         {/* Urgent Hotline Bar */}
-        <div className="bg-linear-to-r from-blue-700 via-indigo-700 to-blue-800 text-white px-3 py-1.5 text-xs">
+        <div className="bg-linear-to-r from-emerald-800 via-teal-800 to-emerald-900 text-white px-3 py-1.5 text-xs">
           <div className="max-w-5xl mx-auto flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 font-medium truncate">
               <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span className="hidden sm:inline">Đường dây nóng khẩn cấp 24/7 (Miễn cước):</span>
               <span className="sm:hidden">Hotline:</span>
-              <a href="tel:111" className="bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded font-bold transition">
+              <a
+                href="tel:111"
+                className="bg-white/15 hover:bg-white/25 px-2 py-0.5 rounded font-bold transition text-emerald-100"
+              >
                 Tổng đài 111 (Trẻ em)
               </a>
-              <span className="text-blue-200">|</span>
-              <a href="tel:113" className="bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded font-bold transition">
+              <span className="text-emerald-300">|</span>
+              <a
+                href="tel:113"
+                className="bg-white/15 hover:bg-white/25 px-2 py-0.5 rounded font-bold transition text-emerald-100"
+              >
                 Cảnh sát 113
               </a>
             </div>
 
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsAdminMode(!isAdminMode)}
-                className={`text-[11px] px-2 py-0.5 rounded border transition flex items-center gap-1 ${
-                  isAdminMode
-                    ? 'bg-amber-500 border-amber-300 text-slate-900 font-bold'
-                    : 'bg-white/10 border-white/20 hover:bg-white/20 text-white'
-                }`}
-                title="Chuyển chế độ Quản trị nhà trường để xem danh sách báo cáo"
-              >
-                <UserCheck className="w-3 h-3" />
-                <span className="hidden md:inline">Chế độ:</span> {isAdminMode ? 'Cán Bộ Tiếp Nhận' : 'Học Sinh'}
-              </button>
+              {currentUser?.role === 'admin' ? (
+                <>
+                  <span className="bg-amber-400 text-slate-950 font-black px-2 py-0.5 rounded-lg text-[11px] flex items-center gap-1 shadow-xs">
+                    <Shield className="w-3 h-3 text-slate-950" />
+                    <span>Admin</span>
+                  </span>
+                  <button
+                    onClick={onOpenGoogleSheetSync}
+                    className="text-[11px] px-2.5 py-0.5 rounded-lg bg-emerald-700/80 hover:bg-emerald-600 text-emerald-100 font-bold border border-emerald-500/40 transition flex items-center gap-1"
+                    title="Quản lý và đồng bộ dữ liệu vào Google Sheet"
+                  >
+                    <FileSpreadsheet className="w-3 h-3 text-emerald-300" />
+                    <span>Google Sheet</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={onOpenAuth}
+                  className="text-[11px] px-2 py-0.5 rounded-lg bg-white/10 hover:bg-white/20 text-emerald-100 font-medium border border-white/20 transition flex items-center gap-1"
+                  title="Dành cho Quản trị viên đăng nhập (admin / admin)"
+                >
+                  <Lock className="w-3 h-3" />
+                  <span className="hidden sm:inline">Quản trị</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -65,27 +109,121 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-3 cursor-pointer group select-none"
           >
             <div className="relative">
-              <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-blue-700 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition">
+              <div className="w-11 h-11 rounded-2xl bg-linear-to-tr from-emerald-700 via-teal-700 to-emerald-600 flex items-center justify-center text-white shadow-md shadow-emerald-700/20 group-hover:scale-105 transition">
                 <Shield className="w-6 h-6" />
               </div>
               <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-[9px] text-white px-1 rounded-full font-bold">
-                24/7
+                XANH
               </div>
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-black tracking-tight text-emerald-800 leading-tight">
+                <h1 className="text-base sm:text-lg font-black tracking-tight text-emerald-900 leading-tight">
                   TRƯỜNG HỌC XANH
                 </h1>
+                <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  Mầm Sống Khỏe
+                </span>
               </div>
               <p className="text-[11px] sm:text-xs text-slate-500 font-medium">
-                Lá Chắn Học Đường • An toàn hôm nay – Tương lai ngày mai
+                Tâm Sáng – Thân Trong – Trí Kiên • Trọn Tuổi Hoa Học Đường
               </p>
             </div>
           </div>
 
           {/* Right Actions */}
           <div className="flex items-center gap-2">
+            {/* Student Video tab shortcut */}
+            <button
+              onClick={() => setActiveTab('student-videos')}
+              className="hidden lg:flex items-center gap-1 px-3 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 text-xs font-bold border border-teal-200 transition"
+            >
+              <Film className="w-3.5 h-3.5 text-teal-600" />
+              <span>Video Học Sinh</span>
+            </button>
+
+            {/* User Account Login / Profile */}
+            {currentUser ? (
+              <div className="relative">
+                <button
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition border border-slate-200"
+                >
+                  <img
+                    src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}
+                    alt="Avatar"
+                    className="w-5 h-5 rounded-full object-cover"
+                  />
+                  <span className="max-w-[100px] truncate">{currentUser.fullName}</span>
+                  {currentUser.role === 'admin' && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-400 text-slate-950 font-black">
+                      Admin
+                    </span>
+                  )}
+                </button>
+
+                {/* Dropdown Menu */}
+                {userDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 p-3 z-50 text-xs space-y-2 animate-in fade-in zoom-in-95">
+                    <div className="border-b border-slate-100 pb-2">
+                      <div className="font-bold text-slate-900">{currentUser.fullName}</div>
+                      <div className="text-[11px] text-slate-500">
+                        {currentUser.school} • {currentUser.gradeClass}
+                      </div>
+                      <div className="text-[10px] text-emerald-700 font-bold mt-0.5">
+                        {currentUser.role === 'admin'
+                          ? '🛡️ Quyền: Quản Trị Viên (Admin)'
+                          : '👤 Thành viên nhà trường'}
+                      </div>
+                    </div>
+
+                    {currentUser.role === 'admin' && (
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          onOpenGoogleSheetSync();
+                        }}
+                        className="w-full text-left p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-800 font-bold flex items-center gap-1.5"
+                      >
+                        <FileSpreadsheet className="w-3.5 h-3.5" />
+                        <span>Xem Bảng Google Sheet</span>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        setActiveTab('student-videos');
+                      }}
+                      className="w-full text-left p-1.5 rounded-lg hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-1.5"
+                    >
+                      <Film className="w-3.5 h-3.5" />
+                      <span>Góc Video Của Học Sinh</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        onLogout();
+                      }}
+                      className="w-full text-left p-1.5 rounded-lg hover:bg-red-50 text-red-600 font-bold flex items-center gap-1.5 border-t border-slate-100 pt-2"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Đăng xuất</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={onOpenAuth}
+                className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold text-xs flex items-center gap-1.5 border border-emerald-300 transition"
+              >
+                <User className="w-3.5 h-3.5 text-emerald-700" />
+                <span>Đăng Nhập / Quản Trị</span>
+              </button>
+            )}
+
             {/* Quick Report Emergency Button */}
             <button
               onClick={() => setActiveTab('report')}
@@ -98,7 +236,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Help Dialog */}
             <button
               onClick={() => setShowEmergencyModal(true)}
-              className="p-2 text-slate-600 hover:text-blue-700 hover:bg-slate-100 rounded-xl transition"
+              className="p-2 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition"
               title="Hướng dẫn bảo vệ bản thân & Đường dây nóng"
             >
               <HelpCircle className="w-5 h-5" />
@@ -107,7 +245,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Mobile Hamburger toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-slate-600 hover:text-blue-700 hover:bg-slate-100 rounded-xl md:hidden transition"
+              className="p-2 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl md:hidden transition"
               title="Menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -124,7 +262,7 @@ export const Header: React.FC<HeaderProps> = ({
                   setActiveTab('home');
                   setMobileMenuOpen(false);
                 }}
-                className={`p-2.5 rounded-lg text-left ${activeTab === 'home' ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                className={`p-2.5 rounded-lg text-left ${activeTab === 'home' ? 'bg-emerald-50 text-emerald-800' : 'text-slate-700 hover:bg-slate-50'}`}
               >
                 🏠 Trang chủ
               </button>
@@ -133,16 +271,25 @@ export const Header: React.FC<HeaderProps> = ({
                   setActiveTab('knowledge');
                   setMobileMenuOpen(false);
                 }}
-                className={`p-2.5 rounded-lg text-left ${activeTab === 'knowledge' ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                className={`p-2.5 rounded-lg text-left ${activeTab === 'knowledge' ? 'bg-emerald-50 text-emerald-800' : 'text-slate-700 hover:bg-slate-50'}`}
               >
-                📖 Cẩm nang nhận diện
+                📖 Báo chí & An ninh mạng
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('student-videos');
+                  setMobileMenuOpen(false);
+                }}
+                className={`p-2.5 rounded-lg text-left ${activeTab === 'student-videos' ? 'bg-emerald-50 text-emerald-800' : 'text-slate-700 hover:bg-slate-50'}`}
+              >
+                🎥 Video học sinh tải lên
               </button>
               <button
                 onClick={() => {
                   setActiveTab('quiz');
                   setMobileMenuOpen(false);
                 }}
-                className={`p-2.5 rounded-lg text-left ${activeTab === 'quiz' ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                className={`p-2.5 rounded-lg text-left ${activeTab === 'quiz' ? 'bg-emerald-50 text-emerald-800' : 'text-slate-700 hover:bg-slate-50'}`}
               >
                 📝 Trắc nghiệm 10 câu
               </button>
@@ -151,28 +298,30 @@ export const Header: React.FC<HeaderProps> = ({
                   setActiveTab('games');
                   setMobileMenuOpen(false);
                 }}
-                className={`p-2.5 rounded-lg text-left ${activeTab === 'games' ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                className={`p-2.5 rounded-lg text-left ${activeTab === 'games' ? 'bg-emerald-50 text-emerald-800' : 'text-slate-700 hover:bg-slate-50'}`}
               >
                 🎮 8 Trò chơi giáo dục
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab('video');
-                  setMobileMenuOpen(false);
-                }}
-                className={`p-2.5 rounded-lg text-left ${activeTab === 'video' ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'}`}
-              >
-                🎥 Video tuyên truyền
               </button>
               <button
                 onClick={() => {
                   setActiveTab('ai');
                   setMobileMenuOpen(false);
                 }}
-                className={`p-2.5 rounded-lg text-left ${activeTab === 'ai' ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                className={`p-2.5 rounded-lg text-left ${activeTab === 'ai' ? 'bg-emerald-50 text-emerald-800' : 'text-slate-700 hover:bg-slate-50'}`}
               >
                 👮 Cố vấn AI học đường
               </button>
+              {currentUser?.role === 'admin' && (
+                <button
+                  onClick={() => {
+                    onOpenGoogleSheetSync();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="p-2.5 rounded-lg text-left text-emerald-800 font-bold bg-emerald-50"
+                >
+                  📊 Xem Google Sheet
+                </button>
+              )}
             </div>
 
             <div className="pt-2 border-t border-slate-100 flex gap-2">
@@ -181,10 +330,10 @@ export const Header: React.FC<HeaderProps> = ({
                   onOpenCommitment();
                   setMobileMenuOpen(false);
                 }}
-                className="w-full py-2 bg-blue-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5"
+                className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5"
               >
-                <Sparkles className="w-3.5 h-3.5" />
-                Ký Cam Kết An Toàn
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                Ký Cam Kết Trường Học Xanh
               </button>
             </div>
           </div>
@@ -253,10 +402,10 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             </div>
 
-            <div className="bg-amber-50 p-3 rounded-xl border border-amber-200 text-xs text-amber-900 mb-5 flex items-start gap-2">
-              <Lock className="w-4 h-4 shrink-0 mt-0.5 text-amber-700" />
+            <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-200 text-xs text-emerald-950 mb-5 flex items-start gap-2">
+              <Lock className="w-4 h-4 shrink-0 mt-0.5 text-emerald-700" />
               <span>
-                <strong>Cam kết ẩn danh:</strong> Nếu em phát hiện hành vi bạo lực, hút Pod hay buôn bán ma túy quanh trường, hãy dùng tính năng <strong>Báo Cáo Ẩn Danh</strong>. Hệ thống không lưu bất kỳ thông tin cá nhân nào của em.
+                <strong>Bảo mật thông tin:</strong> Nếu em phát hiện hành vi bạo lực, hút Pod hay buôn bán ma túy quanh trường, hãy dùng tính năng <strong>Báo Cáo Ẩn Danh</strong>. Hệ thống không lưu bất kỳ thông tin nhận dạng cá nhân nào của em.
               </span>
             </div>
 

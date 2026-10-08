@@ -20,6 +20,7 @@ import {
   Sparkles,
   ArrowRight,
   Info,
+  Download,
 } from 'lucide-react';
 import { AnonymousReportSubmission, ReportDetail, ReportMessage } from '../types';
 
@@ -872,6 +873,16 @@ export const ReportIncidentView: React.FC<ReportIncidentViewProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
+              <a
+                href="/api/sync/excel/export"
+                download
+                className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-xs"
+                title="Xuất toàn bộ báo cáo ra file Excel chuẩn thể thức"
+              >
+                <Download className="w-3.5 h-3.5 text-emerald-200" />
+                <span>Xuất Excel (.xlsx)</span>
+              </a>
+
               <select
                 value={adminFilterUrgency}
                 onChange={(e) => setAdminFilterUrgency(e.target.value)}
