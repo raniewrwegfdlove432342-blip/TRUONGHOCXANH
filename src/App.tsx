@@ -23,7 +23,8 @@ import { GoogleSheetSyncModal } from './components/GoogleSheetSyncModal';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
-  const [pledgeCount, setPledgeCount] = useState<number>(1869);
+  const [pledgeCount, setPledgeCount] = useState<number>(0);
+  const [studentVideoCount, setStudentVideoCount] = useState<number>(0);
   const [isCommitmentModalOpen, setIsCommitmentModalOpen] = useState(false);
   const [selectedPillar, setSelectedPillar] = useState<PillarItem | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
@@ -51,7 +52,17 @@ export default function App() {
         }
       })
       .catch((err) => console.log('Could not fetch initial commitments:', err));
-  }, []);
+
+    // Fetch video count
+    fetch('/api/student-videos')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setStudentVideoCount(data.length);
+        }
+      })
+      .catch(() => {});
+  }, [activeTab]);
 
   const handleLoginSuccess = (user: UserAccount) => {
     setCurrentUser(user);
@@ -71,6 +82,9 @@ export default function App() {
     setIsAdminMode(false);
   };
 
+  const hasVideos = studentVideoCount > 0;
+  const showVideoTab = hasVideos || currentUser?.role === 'admin' || activeTab === 'student-videos';
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-emerald-100 selection:text-emerald-900">
       {/* Top Header */}
@@ -84,6 +98,7 @@ export default function App() {
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onLogout={handleLogout}
         onOpenGoogleSheetSync={() => setIsGoogleSheetModalOpen(true)}
+        hasVideos={hasVideos}
       />
 
       {/* Desktop Navigation Tabs */}
@@ -93,7 +108,7 @@ export default function App() {
             {[
               { id: 'home' as ActiveTab, label: 'Trang chủ' },
               { id: 'knowledge' as ActiveTab, label: 'Báo chí & ATTT' },
-              { id: 'student-videos' as ActiveTab, label: 'Video HS sáng tạo' },
+              ...(showVideoTab ? [{ id: 'student-videos' as ActiveTab, label: 'Video HS sáng tạo' }] : []),
               { id: 'quiz' as ActiveTab, label: 'Trắc nghiệm 10 câu' },
               { id: 'games' as ActiveTab, label: '8 Trò chơi' },
               { id: 'ai' as ActiveTab, label: 'Cố vấn AI học đường' },
@@ -189,7 +204,12 @@ export default function App() {
       />
 
       {/* Mobile Bottom Navigation Bar */}
-      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+      <BottomNav
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        hasVideos={hasVideos}
+        isAdmin={currentUser?.role === 'admin'}
+      />
 
       {/* Commitment Pledge Modal */}
       <CommitmentModal

@@ -28,6 +28,7 @@ interface HeaderProps {
   onOpenAuth: () => void;
   onLogout: () => void;
   onOpenGoogleSheetSync: () => void;
+  hasVideos?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -40,10 +41,13 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAuth,
   onLogout,
   onOpenGoogleSheetSync,
+  hasVideos = false,
 }) => {
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+
+  const showVideoNav = hasVideos || currentUser?.role === 'admin' || activeTab === 'student-videos';
 
   return (
     <>
@@ -91,10 +95,10 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   onClick={onOpenAuth}
                   className="text-[11px] px-2 py-0.5 rounded-lg bg-white/10 hover:bg-white/20 text-emerald-100 font-medium border border-white/20 transition flex items-center gap-1"
-                  title="Dành cho Quản trị viên đăng nhập (admin / admin)"
+                  title="Đăng nhập tài khoản Quản trị & Thầy Cô"
                 >
                   <Lock className="w-3 h-3" />
-                  <span className="hidden sm:inline">Quản trị</span>
+                  <span className="hidden sm:inline">Đăng nhập</span>
                 </button>
               )}
             </div>
@@ -134,13 +138,15 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Right Actions */}
           <div className="flex items-center gap-2">
             {/* Student Video tab shortcut */}
-            <button
-              onClick={() => setActiveTab('student-videos')}
-              className="hidden lg:flex items-center gap-1 px-3 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 text-xs font-bold border border-teal-200 transition"
-            >
-              <Film className="w-3.5 h-3.5 text-teal-600" />
-              <span>Video Học Sinh</span>
-            </button>
+            {showVideoNav && (
+              <button
+                onClick={() => setActiveTab('student-videos')}
+                className="hidden lg:flex items-center gap-1 px-3 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 text-xs font-bold border border-teal-200 transition"
+              >
+                <Film className="w-3.5 h-3.5 text-teal-600" />
+                <span>Video Học Sinh</span>
+              </button>
+            )}
 
             {/* User Account Login / Profile */}
             {currentUser ? (
@@ -155,9 +161,17 @@ export const Header: React.FC<HeaderProps> = ({
                     className="w-5 h-5 rounded-full object-cover"
                   />
                   <span className="max-w-[100px] truncate">{currentUser.fullName}</span>
-                  {currentUser.role === 'admin' && (
+                  {currentUser.role === 'admin' ? (
                     <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-400 text-slate-950 font-black">
                       Admin
+                    </span>
+                  ) : currentUser.role === 'teacher' ? (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-teal-100 text-teal-800 font-bold border border-teal-200">
+                      GV
+                    </span>
+                  ) : (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
+                      HS
                     </span>
                   )}
                 </button>
@@ -173,7 +187,9 @@ export const Header: React.FC<HeaderProps> = ({
                       <div className="text-[10px] text-emerald-700 font-bold mt-0.5">
                         {currentUser.role === 'admin'
                           ? '🛡️ Quyền: Quản Trị Viên (Admin)'
-                          : '👤 Thành viên nhà trường'}
+                          : currentUser.role === 'teacher'
+                          ? '👨‍🏫 Quyền: Thầy Cô / Giáo Viên (GV)'
+                          : '🎓 Quyền: Học Sinh (HS)'}
                       </div>
                     </div>
 
@@ -190,16 +206,18 @@ export const Header: React.FC<HeaderProps> = ({
                       </button>
                     )}
 
-                    <button
-                      onClick={() => {
-                        setUserDropdownOpen(false);
-                        setActiveTab('student-videos');
-                      }}
-                      className="w-full text-left p-1.5 rounded-lg hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-1.5"
-                    >
-                      <Film className="w-3.5 h-3.5" />
-                      <span>Góc Video Của Học Sinh</span>
-                    </button>
+                    {showVideoNav && (
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          setActiveTab('student-videos');
+                        }}
+                        className="w-full text-left p-1.5 rounded-lg hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-1.5"
+                      >
+                        <Film className="w-3.5 h-3.5" />
+                        <span>Góc Video Của Học Sinh</span>
+                      </button>
+                    )}
 
                     <button
                       onClick={() => {
@@ -275,15 +293,17 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 📖 Báo chí & An ninh mạng
               </button>
-              <button
-                onClick={() => {
-                  setActiveTab('student-videos');
-                  setMobileMenuOpen(false);
-                }}
-                className={`p-2.5 rounded-lg text-left ${activeTab === 'student-videos' ? 'bg-emerald-50 text-emerald-800' : 'text-slate-700 hover:bg-slate-50'}`}
-              >
-                🎥 Video học sinh tải lên
-              </button>
+              {showVideoNav && (
+                <button
+                  onClick={() => {
+                    setActiveTab('student-videos');
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`p-2.5 rounded-lg text-left ${activeTab === 'student-videos' ? 'bg-emerald-50 text-emerald-800' : 'text-slate-700 hover:bg-slate-50'}`}
+                >
+                  🎥 Video học sinh tải lên
+                </button>
+              )}
               <button
                 onClick={() => {
                   setActiveTab('quiz');

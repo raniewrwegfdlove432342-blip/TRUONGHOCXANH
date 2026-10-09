@@ -46,8 +46,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onSelectPillar,
   onSelectArticle,
 }) => {
-  // Ambassador messages state
-  const [ambassadors, setAmbassadors] = useState<AmbassadorMessage[]>(INITIAL_AMBASSADORS);
+  // Ambassador messages state (Real user messages - No fake seeded records)
+  const [ambassadors, setAmbassadors] = useState<AmbassadorMessage[]>([]);
   const [showAddMsgModal, setShowAddMsgModal] = useState(false);
   const [newMsgName, setNewMsgName] = useState('');
   const [newMsgGrade, setNewMsgGrade] = useState('');
@@ -590,42 +590,79 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </button>
         </div>
 
-        <div className="space-y-3">
-          {ambassadors.map((amb) => (
-            <div
-              key={amb.id}
-              className="p-4 rounded-2xl bg-emerald-50/40 border border-emerald-200/70 relative"
+        {ambassadors.length === 0 ? (
+          <div className="p-6 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-center space-y-2">
+            <p className="text-xs text-slate-600 font-medium">
+              Chưa có lời nhắn nào được gửi. Hãy là người đầu tiên lan tỏa thông điệp tích cực!
+            </p>
+            <button
+              onClick={() => setShowAddMsgModal(true)}
+              className="text-xs font-bold text-emerald-700 hover:underline"
             >
-              <div className="flex items-start justify-between gap-2 mb-1.5">
-                <div>
-                  <span className="font-bold text-xs sm:text-sm text-slate-900">
-                    {amb.studentName}
-                  </span>
-                  <span className="text-xs text-slate-500 ml-1">
-                    ({amb.grade}{amb.school ? ` - ${amb.school}` : ''})
-                  </span>
+              + Viết lời nhắn đầu tiên
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {ambassadors.map((amb) => (
+              <div
+                key={amb.id}
+                className="p-4 rounded-2xl bg-emerald-50/40 border border-emerald-200/70 relative"
+              >
+                <div className="flex items-start justify-between gap-2 mb-1.5">
+                  <div>
+                    <span className="font-bold text-xs sm:text-sm text-slate-900">
+                      {amb.studentName}
+                    </span>
+                    <span className="text-xs text-slate-500 ml-1">
+                      ({amb.grade}{amb.school ? ` - ${amb.school}` : ''})
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => handleLikeAmbassador(amb.id)}
+                    className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white border border-rose-200 text-rose-600 text-xs hover:bg-rose-50 transition"
+                    title="Thả tim lời nhắn"
+                  >
+                    <Heart className="w-3.5 h-3.5 fill-rose-500" />
+                    <span className="font-bold">{amb.likes}</span>
+                  </button>
                 </div>
 
-                <button
-                  onClick={() => handleLikeAmbassador(amb.id)}
-                  className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white border border-rose-200 text-rose-600 text-xs hover:bg-rose-50 transition"
-                  title="Thả tim lời nhắn"
-                >
-                  <Heart className="w-3.5 h-3.5 fill-rose-500" />
-                  <span className="font-bold">{amb.likes}</span>
-                </button>
-              </div>
+                <div className="inline-block px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold text-[10px] mb-2">
+                  {amb.badge}
+                </div>
 
-              <div className="inline-block px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold text-[10px] mb-2">
-                {amb.badge}
+                <p className="text-xs text-slate-700 italic leading-relaxed">
+                  "{amb.content}"
+                </p>
               </div>
+            ))}
+          </div>
+        )}
+      </section>
 
-              <p className="text-xs text-slate-700 italic leading-relaxed">
-                "{amb.content}"
-              </p>
-            </div>
-          ))}
+      {/* Góc Tác Phẩm Sáng Tạo Học Sinh Banner */}
+      <section className="bg-linear-to-r from-teal-900 via-emerald-900 to-teal-950 text-white rounded-3xl p-5 sm:p-6 shadow-md border border-teal-700/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-200 text-[10px] font-black uppercase tracking-wider">
+            <Film className="w-3.5 h-3.5 text-amber-300" />
+            <span>PHONG TRÀO TUYÊN TRUYỀN HỌC ĐƯỜNG</span>
+          </div>
+          <h3 className="text-base sm:text-lg font-black text-white">
+            Góc Sáng Tạo Video Clip & Tranh Áp Phích
+          </h3>
+          <p className="text-xs text-slate-300 max-w-xl">
+            Các chi đội và học sinh tham gia sáng tạo video, tiểu phẩm kịch hoặc tranh vẽ cổ động phòng chống ma túy, bạo lực và pod/vape.
+          </p>
         </div>
+        <button
+          onClick={() => setActiveTab('student-videos')}
+          className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-xl text-xs transition shadow-md shrink-0 flex items-center gap-1.5"
+        >
+          <PlusCircle className="w-4 h-4 text-slate-950" />
+          <span>+ Nộp Tác Phẩm Của Em</span>
+        </button>
       </section>
 
       {/* Add Ambassador Message Modal */}

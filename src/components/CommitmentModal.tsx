@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Award, CheckCircle2, Sparkles, Share2, Download, Printer, Shield } from 'lucide-react';
+import { X, Award, CheckCircle2, Sparkles, Share2, Download, Printer, Shield, Check, Copy, ExternalLink } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { downloadCertificateImage } from '../utils/certificateGenerator';
 
 interface CommitmentModalProps {
   isOpen: boolean;
@@ -24,8 +25,12 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
     name: string;
     school: string;
     date: string;
+    role: string;
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusFeedback, setStatusFeedback] = useState<string | null>(null);
+  const [showSharePanel, setShowSharePanel] = useState(false);
+  const [copiedSuccess, setCopiedSuccess] = useState(false);
 
   if (!isOpen) return null;
 
@@ -42,6 +47,7 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
     if (!name.trim()) return;
 
     setIsSubmitting(true);
+    const roleText = role === 'student' ? 'Học sinh' : role === 'teacher' ? 'Thầy cô' : 'Phụ huynh';
     try {
       const res = await fetch('/api/commitments', {
         method: 'POST',
@@ -49,7 +55,7 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
         body: JSON.stringify({
           name: name.trim(),
           school: school.trim() || 'Trường THCS/THPT Thân Yêu',
-          role: role === 'student' ? 'Học sinh' : role === 'teacher' ? 'Thầy cô' : 'Phụ huynh',
+          role: roleText,
         }),
       });
       const data = await res.json();
@@ -60,6 +66,7 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
           name: data.name,
           school: data.school,
           date: data.pledgedAt,
+          role: roleText,
         });
 
         // Trigger victory confetti!
@@ -74,6 +81,80 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleDownloadCertificate = () => {
+    if (!certificateData) return;
+    const ok = downloadCertificateImage({
+      title: 'GIẤY CHỨNG NHẬN ĐẠI SỨ HỌC ĐƯỜNG',
+      recipientName: certificateData.name,
+      schoolOrOrg: certificateData.school,
+      roleLabel: certificateData.role,
+      citationText: 'Đã chính thức tuyên thệ và ký cam kết danh dự: Kiên quyết nói KHÔNG với Ma túy, Thuốc lá điện tử (Pod / Vape), Bạo lực học đường; tích cực lan tỏa lối sống lành mạnh và xây dựng môi trường học đường an toàn, văn minh.',
+      certificateId: certificateData.id,
+      dateStr: certificateData.date,
+      badgeText: 'PHONG TRÀO TOÀN DIỆN HỌC ĐƯỜNG',
+    });
+
+    if (ok) {
+      setStatusFeedback('✓ Đã tải ảnh chứng nhận (.PNG) chất lượng cao về thiết bị của bạn!');
+      setTimeout(() => setStatusFeedback(null), 4000);
+    }
+  };
+
+  const handleShareCertificate = async () => {
+    if (!certificateData) return;
+    setShowSharePanel(true);
+    const shareText = `🛡️ Tôi (${certificateData.name} - ${certificateData.school}) đã chính thức ký cam kết "Trường Học Xanh - An Toàn Hôm Nay, Tương Lai Ngày Mai" trên nền tảng Lá Chắn Học Đường!\n👉 Nói KHÔNG với Ma túy, Thuốc lá điện tử & Bạo lực học đường! Hãy cùng tham gia tại: ${window.location.origin}`;
+
+    // Try native share on mobile if supported
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Chứng nhận Lá Chắn Học Đường',
+          text: shareText,
+          url: window.location.origin,
+        });
+        setStatusFeedback('✓ Đã mở trình chia sẻ trên thiết bị!');
+        setTimeout(() => setStatusFeedback(null), 3000);
+        return;
+      } catch (err) {
+        // Fallback to clipboard
+      }
+    }
+
+    handleCopyText(shareText);
+  };
+
+  const handleCopyText = (text?: string) => {
+    if (!certificateData) return;
+    const copyContent = text || `🛡️ Tôi (${certificateData.name} - ${certificateData.school}) đã chính thức ký cam kết "Trường Học Xanh - An Toàn Hôm Nay, Tương Lai Ngày Mai" trên nền tảng Lá Chắn Học Đường!\n👉 Nói KHÔNG với Ma túy, Thuốc lá điện tử & Bạo lực học đường!`;
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(copyContent).then(() => {
+        setCopiedSuccess(true);
+        setStatusFeedback('✓ Đã sao chép lời cam kết vào bộ nhớ tạm! Bạn có thể dán (Paste) lên Facebook, Zalo, nhóm lớp.');
+        setTimeout(() => setCopiedSuccess(false), 3000);
+        setTimeout(() => setStatusFeedback(null), 4500);
+      }).catch(() => {
+        fallbackCopy(copyContent);
+      });
+    } else {
+      fallbackCopy(copyContent);
+    }
+  };
+
+  const fallbackCopy = (text: string) => {
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    setCopiedSuccess(true);
+    setStatusFeedback('✓ Đã sao chép lời cam kết vào bộ nhớ tạm!');
+    setTimeout(() => setCopiedSuccess(false), 3000);
+    setTimeout(() => setStatusFeedback(null), 4000);
   };
 
   const handlePrint = () => {
@@ -106,6 +187,48 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Role selector */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Bạn tham gia với tư cách:
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setRole('student')}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold border transition ${
+                      role === 'student'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                    }`}
+                  >
+                    🎓 Học Sinh (HS)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole('teacher')}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold border transition ${
+                      role === 'teacher'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                    }`}
+                  >
+                    👨‍🏫 Thầy Cô (GV)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole('parent')}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold border transition ${
+                      role === 'parent'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                    }`}
+                  >
+                    👨‍👩‍👧 Phụ Huynh
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   Họ và tên của em / Thầy cô: <span className="text-red-500">*</span>
@@ -120,33 +243,17 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Trường / Lớp:
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ví dụ: Lớp 8A3, THCS Chu Văn An"
-                    value={school}
-                    onChange={(e) => setSchool(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Vai trò:
-                  </label>
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value as any)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
-                  >
-                    <option value="student">Học sinh</option>
-                    <option value="teacher">Thầy cô / Cán bộ</option>
-                    <option value="parent">Phụ huynh học sinh</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Trường / Lớp / Chi đội:
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: Lớp 8A3, THCS Chu Văn An"
+                  value={school}
+                  onChange={(e) => setSchool(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
               </div>
 
               {/* 4 Commitments check */}
@@ -193,18 +300,26 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
           </div>
         ) : (
           /* Certificate Result */
-          <div className="space-y-6">
+          <div className="space-y-5">
             <div className="text-center">
               <span className="inline-block p-2 rounded-full bg-emerald-100 text-emerald-600 mb-2">
                 <CheckCircle2 className="w-8 h-8" />
               </span>
               <h3 className="text-xl font-black text-slate-900">
-                Chúc Mừng Em Đã Gia Nhập Lá Chắn Học Đường!
+                Chúc Mừng Bạn Đã Gia Nhập Lá Chắn Học Đường!
               </h3>
               <p className="text-xs text-slate-500">
                 Chứng nhận danh dự bảo vệ môi trường giáo dục an toàn
               </p>
             </div>
+
+            {/* Status Feedback Toast */}
+            {statusFeedback && (
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-xs text-emerald-900 font-bold flex items-center gap-2 animate-in fade-in">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{statusFeedback}</span>
+              </div>
+            )}
 
             {/* Official Looking Certificate Card */}
             <div className="relative border-4 border-amber-400 bg-linear-to-b from-amber-50/50 via-white to-amber-50/40 p-6 rounded-2xl text-center shadow-inner overflow-hidden">
@@ -224,13 +339,13 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
               </div>
 
               <div className="text-xs uppercase text-amber-700 font-bold tracking-widest">
-                GIẤY CHỨNG NHẬN ĐẠI SỨ
+                GIẤY CHỨNG NHẬN ĐẠI SỨ HỌC ĐƯỜNG
               </div>
               <div className="text-2xl font-black text-slate-900 my-2 text-blue-900 font-serif">
                 {certificateData.name}
               </div>
               <div className="text-xs text-slate-600 font-medium mb-3">
-                {certificateData.school}
+                {certificateData.role} • {certificateData.school}
               </div>
 
               <p className="text-[11px] text-slate-600 italic max-w-sm mx-auto leading-relaxed">
@@ -247,30 +362,101 @@ export const CommitmentModal: React.FC<CommitmentModalProps> = ({
               </div>
             </div>
 
-            <div className="flex gap-2">
+            {/* Action Buttons: LƯU & LAN TỎA */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <button
+                onClick={handleDownloadCertificate}
+                className="py-2.5 px-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm active:scale-98"
+                title="Tải ảnh chứng nhận sắc nét về máy điện thoại hoặc máy tính"
+              >
+                <Download className="w-4 h-4 text-emerald-200" />
+                <span>Lưu Chứng Nhận (Ảnh PNG)</span>
+              </button>
+
+              <button
+                onClick={handleShareCertificate}
+                className="py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm active:scale-98"
+                title="Lan tỏa lời cam kết đến bạn bè và mạng xã hội"
+              >
+                <Share2 className="w-4 h-4 text-blue-200" />
+                <span>Lan Tỏa Chứng Nhận</span>
+              </button>
+
               <button
                 onClick={handlePrint}
-                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition"
+                className="py-2.5 px-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition"
+                title="In chứng nhận ra máy in"
               >
-                <Printer className="w-4 h-4" />
-                In / Lưu Chứng Nhận
-              </button>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(
-                    `Tôi (${certificateData.name}) đã chính thức ký cam kết "Trường Học Xanh - An Toàn Hôm Nay, Tương Lai Ngày Mai" trên nền tảng Lá Chắn Học Đường! Hãy cùng tham gia!`
-                  );
-                  alert('Đã sao chép lời nhắn cam kết để bạn chia sẻ cho bạn bè!');
-                }}
-                className="px-4 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
-              >
-                <Share2 className="w-4 h-4" />
-                Lan tỏa
+                <Printer className="w-4 h-4 text-slate-300" />
+                <span>In Bản Giấy</span>
               </button>
             </div>
+
+            {/* Share Panel (When user clicks Lan tỏa) */}
+            {showSharePanel && (
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl space-y-3 animate-in fade-in">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+                    <Share2 className="w-4 h-4 text-blue-600" />
+                    <span>Lan Tỏa Thông Điệp Trường Học Xanh</span>
+                  </div>
+                  <button
+                    onClick={() => setShowSharePanel(false)}
+                    className="text-xs text-slate-400 hover:text-slate-600"
+                  >
+                    Đóng
+                  </button>
+                </div>
+
+                <p className="text-[11px] text-slate-600">
+                  Hãy cùng kêu gọi bạn bè cùng trường tham gia nói KHÔNG với Ma túy và Bạo lực học đường:
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => handleCopyText()}
+                    className="px-3 py-2 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 flex items-center gap-1.5 shadow-xs"
+                  >
+                    {copiedSuccess ? (
+                      <>
+                        <Check className="w-4 h-4 text-emerald-600" />
+                        <span className="text-emerald-700 font-bold">Đã sao chép!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4 text-slate-600" />
+                        <span>Sao chép lời cam kết</span>
+                      </>
+                    )}
+                  </button>
+
+                  <a
+                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-2 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Chia sẻ lên Facebook</span>
+                  </a>
+
+                  <button
+                    onClick={() => {
+                      handleCopyText();
+                      window.open('https://chat.zalo.me/', '_blank');
+                    }}
+                    className="px-3 py-2 bg-[#0068FF] hover:bg-[#005cd6] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Gửi qua Zalo nhóm lớp</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
     </div>
   );
 };
+

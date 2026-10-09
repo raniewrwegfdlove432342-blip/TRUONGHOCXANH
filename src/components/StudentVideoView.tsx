@@ -53,7 +53,6 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
   const [category, setCategory] = useState<'vape' | 'drugs' | 'violence' | 'friendship'>('vape');
   const [fileType, setFileType] = useState<'video' | 'image'>('video');
   const [description, setDescription] = useState('');
-  const [customDriveLink, setCustomDriveLink] = useState('');
   const [formError, setFormError] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [localPreviewUrl, setLocalPreviewUrl] = useState<string>('');
@@ -157,8 +156,6 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
         friendship: 'Xây dựng Tình bạn học đường đẹp',
       };
 
-      const finalDriveUrl = customDriveLink.trim() || SCHOOL_GOOGLE_DRIVE_FOLDER;
-
       const res = await fetch('/api/student-videos/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -169,11 +166,11 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
           school: school.trim() || currentUser?.school || 'Trường học thân yêu',
           category,
           categoryLabel: categoryLabels[category],
-          driveUrl: finalDriveUrl,
-          videoUrl: fileType === 'video' ? localPreviewUrl : undefined,
-          thumbnailUrl: fileType === 'image' ? localPreviewUrl : undefined,
+          fileBase64: localPreviewUrl,
+          fileName: selectedFile?.name,
+          mimeType: selectedFile?.type,
           fileType,
-          description: description.trim() || 'Tác phẩm truyền thông do học sinh sáng tạo và nộp vào Google Drive trường.',
+          description: description.trim() || 'Tác phẩm sáng tạo của học sinh tuyên truyền phòng chống tệ nạn học đường.',
           duration: fileType === 'image' ? 'Hình ảnh / Áp phích' : 'Video clip',
         }),
       });
@@ -190,7 +187,6 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
         setShowUploadForm(false);
         setTitle('');
         setDescription('');
-        setCustomDriveLink('');
         setSelectedFile(null);
         setLocalPreviewUrl('');
         setFormError('');
@@ -327,11 +323,11 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
 
       {/* Upload Success Modal / Notice */}
       {uploadSuccessData?.show && (
-        <div className="p-4 bg-emerald-50 border-2 border-emerald-400 rounded-3xl space-y-2 animate-in fade-in">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2 font-black text-emerald-900 text-sm">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-              <span>Tác phẩm "{uploadSuccessData.title}" đã được nộp thành công!</span>
+        <div className="p-5 sm:p-6 bg-emerald-50 border-2 border-emerald-500 rounded-3xl space-y-3.5 shadow-lg animate-in fade-in">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2.5 font-black text-emerald-950 text-base">
+              <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
+              <span>Tác phẩm "{uploadSuccessData.title}" đã được nộp và tải lên thành công!</span>
             </div>
             <button
               onClick={() => setUploadSuccessData(null)}
@@ -340,20 +336,22 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
               <X className="w-4 h-4" />
             </button>
           </div>
-          <p className="text-xs text-slate-700 leading-relaxed">
-            📁 Trình duyệt đã mở thư mục Google Drive của trường trong tab mới. Hãy kéo hoặc thả tệp video/ảnh của em vào thư mục Google Drive để lưu trữ lâu dài nhé!
-          </p>
-          <div className="pt-1 flex items-center gap-2">
-            <a
-              href={SCHOOL_GOOGLE_DRIVE_FOLDER}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
+          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-emerald-200 space-y-2 text-xs text-slate-700 leading-relaxed">
+            <div className="flex items-center gap-2 font-bold text-emerald-900">
+              <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Tác phẩm của em đã được hệ thống lưu trữ an toàn và đồng bộ vào Google Sheet của trường!</span>
+            </div>
+            <p className="text-[11px] text-slate-600">
+              Toàn bộ thầy cô và học sinh trong trường có thể theo dõi tác phẩm tuyên truyền của em ngay trong danh sách bên dưới.
+            </p>
+          </div>
+          <div className="pt-1 flex items-center justify-end">
+            <button
+              onClick={() => setUploadSuccessData(null)}
+              className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs transition shadow-xs"
             >
-              <FolderOpen className="w-3.5 h-3.5" />
-              <span>Bấm vào đây nếu trình duyệt chưa mở Google Drive</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
+              Xem tác phẩm của em
+            </button>
           </div>
         </div>
       )}
@@ -510,7 +508,7 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
                 </div>
               )}
               <p className="text-[11px] text-slate-600 italic pt-1">
-                * Sau khi bấm "Nộp Tác Phẩm", hệ thống sẽ lưu hiển thị trên app và tự động mở thư mục Google Drive của trường để bạn thả tệp vào lưu trữ.
+                * Khi bấm "Nộp Tác Phẩm", tệp sẽ được tải trực tiếp lên thư mục lưu trữ của nhà trường và đồng bộ vào Google Sheet.
               </p>
             </div>
 
@@ -526,6 +524,12 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
                 className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 bg-white"
               />
             </div>
+
+            {formError && (
+              <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-bold">
+                ⚠️ {formError}
+              </div>
+            )}
 
             <div className="pt-2 flex items-center justify-end gap-2.5">
               <button

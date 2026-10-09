@@ -5,13 +5,24 @@ import { ActiveTab } from '../types';
 interface BottomNavProps {
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
+  hasVideos?: boolean;
+  isAdmin?: boolean;
 }
 
-export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab }) => {
+export const BottomNav: React.FC<BottomNavProps> = ({
+  activeTab,
+  setActiveTab,
+  hasVideos = false,
+  isAdmin = false,
+}) => {
+  const showVideosTab = hasVideos || isAdmin || activeTab === 'student-videos';
+
   const navItems = [
     { id: 'home' as ActiveTab, label: 'Trang chủ', icon: Home },
     { id: 'knowledge' as ActiveTab, label: 'Báo chí & ATTT', icon: BookOpen },
-    { id: 'student-videos' as ActiveTab, label: 'Video HS', icon: Film },
+    ...(showVideosTab
+      ? [{ id: 'student-videos' as ActiveTab, label: 'Video HS', icon: Film }]
+      : [{ id: 'quiz' as ActiveTab, label: 'Trắc nghiệm', icon: CheckSquare }]),
     { id: 'games' as ActiveTab, label: 'Trò chơi', icon: Gamepad2 },
     { id: 'report' as ActiveTab, label: 'Báo cáo', icon: AlertTriangle },
   ];

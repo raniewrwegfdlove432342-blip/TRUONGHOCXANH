@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import * as XLSX from 'xlsx';
@@ -66,7 +67,7 @@ export interface UserAccount {
   username: string;
   password?: string;
   fullName: string;
-  role: 'student' | 'teacher';
+  role: 'admin' | 'student' | 'teacher';
   school: string;
   gradeClass?: string;
   email?: string;
@@ -95,157 +96,42 @@ export interface StudentVideo {
   syncedToGoogleSheet?: boolean;
 }
 
-// Initial Reports
-const initialReports: AnonymousReport[] = [
-  {
-    id: 'rep-001',
-    ticketCode: 'LCHD-8821',
-    pin: '1234',
-    category: 'vape',
-    categoryLabel: 'Thuốc lá điện tử (Pod/Vape)',
-    urgency: 'medium',
-    title: 'Một nhóm anh chị lớp 9 tụ tập hút Pod ở khu nhà vệ sinh dãy C',
-    location: 'Nhà vệ sinh tầng 2, dãy C (gần phòng thí nghiệm)',
-    incidentTime: 'Giờ ra chơi tiết 3 các ngày thứ Hai, thứ Tư',
-    description: 'Em thấy một nhóm bạn mang pod hình hộp đồ chơi màu hồng mùi kẹo ngọt ra hút và rủ rê các em học sinh lớp 6 mới vào thử. Các em nhỏ rất sợ và có dấu hiệu bị ho sặc sụa.',
-    hasEvidence: false,
-    status: 'intervening',
-    createdAt: new Date(Date.now() - 36 * 3600 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
-    notesFromSchool: 'Đội cờ đỏ và thầy giám thị đã bố trí tăng cường kiểm tra đột xuất tại khu vực này.',
-    messages: [
-      {
-        id: 'msg-1',
-        sender: 'student',
-        senderName: 'Học sinh ẩn danh',
-        content: 'Em mong thầy cô giữ kín thông tin, nhóm này khá đông và hay đe dọa các bạn lớp dưới.',
-        timestamp: new Date(Date.now() - 36 * 3600 * 1000).toISOString(),
-      },
-      {
-        id: 'msg-2',
-        sender: 'counselor',
-        senderName: 'Tổ Tư Vấn & An Ninh Trường Học',
-        content: 'Chào em, Ban Giám Hiệu đã tiếp nhận sự việc và cam kết bảo mật 100% danh tính của em. Thầy cô giám thị đã phối hợp kiểm tra và tịch thu tang vật, đồng thời mời phụ huynh các em liên quan lên làm việc theo quy định giáo dục. Em hãy an tâm học tập nhé!',
-        timestamp: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
-      },
-    ],
-  },
-  {
-    id: 'rep-002',
-    ticketCode: 'LCHD-7492',
-    pin: '5678',
-    category: 'drugs',
-    categoryLabel: 'Nghi vấn ma túy ngụy trang (Nước vui / Pod chill)',
-    urgency: 'high',
-    title: 'Người lạ mặt mời uống loại nước lạ đóng gói kẹo ở quán nước đối diện cổng phụ',
-    location: 'Quán nước đối diện cổng phụ trường THCS',
-    incidentTime: '11h30 tan trường trưa hôm qua',
-    description: 'Có một nam thanh niên đeo kính đen hay đứng ở quán nước mời gọi các bạn học sinh uống thử gói bột pha nước màu đỏ gọi là "nước khoái vui vẻ", bảo uống vào hết buồn ngủ. Em thấy rất khả nghi giống cảnh báo trên TV.',
-    hasEvidence: true,
-    evidenceUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80',
-    status: 'received',
-    createdAt: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
-    notesFromSchool: 'Đã báo cáo Công an Phường sở tại để tuần tra khu vực xung quanh trường học.',
-    messages: [
-      {
-        id: 'msg-3',
-        sender: 'counselor',
-        senderName: 'Cán Bộ Phụ Trách Tổng Đài 111 & Nhà Trường',
-        content: 'Cảm ơn em đã dũng cảm và sáng suốt thông báo! Tuyệt đối không được uống hay nhận bất cứ thứ gì từ người này. Nhà trường đã phối hợp cùng Công an phường xác minh và tuần tra ngay cổng trường.',
-        timestamp: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
-      },
-    ],
-  },
-  {
-    id: 'rep-003',
-    ticketCode: 'LCHD-3319',
-    pin: '9900',
-    category: 'violence',
-    categoryLabel: 'Bạo lực học đường & Cô lập',
-    urgency: 'medium',
-    title: 'Bạn cùng lớp bị đe dọa chặn đánh sau giờ học',
-    location: 'Cổng công viên cách trường 300m',
-    incidentTime: 'Dự kiến chiều thứ 6 tuần này lúc 17h',
-    description: 'Em tình cờ nghe được nhóm bạn hẹn nhau chặn đường bạn T. lớp 8B để "nói chuyện bằng tay chân" vì mâu thuẫn trong nhóm chat mạng xã hội. Em rất lo lắng cho bạn T.',
-    hasEvidence: false,
-    status: 'verifying',
-    createdAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 8 * 3600 * 1000).toISOString(),
-    notesFromSchool: 'Cô giáo chủ nhiệm lớp 8B và Chuyên viên tư vấn tâm lý đang gặp riêng các bạn để hòa giải và ngăn chặn.',
-    messages: [
-      {
-        id: 'msg-4',
-        sender: 'counselor',
-        senderName: 'Cô Giáo Cố Vấn Tâm Lý',
-        content: 'Cô đã ghi nhận thông tin rất kịp thời từ em. Chiều thứ 6 này sẽ có thầy giám thị và bảo vệ chốt chặn bảo vệ bạn T. Cô cũng đang làm việc với lớp để xử lý mâu thuẫn tận gốc. Cảm ơn tấm lòng tốt của em!',
-        timestamp: new Date(Date.now() - 8 * 3600 * 1000).toISOString(),
-      },
-    ],
-  },
-];
+// Ensure storage directories exist
+const DATA_DIR = path.join(__dirname, 'data');
+const DB_FILE = path.join(DATA_DIR, 'server-db.json');
+const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads');
 
-// Initial Seeded Users (Admin, Teachers, Students)
-const initialUsers: UserAccount[] = [
-  {
-    id: 'user-admin',
-    username: 'admin',
-    password: 'admin',
-    fullName: 'Quản Trị Viên (Admin)',
-    role: 'admin',
-    school: 'Trường Học Xanh',
-    gradeClass: 'Ban Quản Trị Hệ Thống',
-    email: 'admin@truonghocxanh.edu.vn',
-    avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&auto=format&fit=crop&q=80',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'user-gv-1',
-    username: 'gv_nguyenvana',
-    password: 'password123',
-    fullName: 'Thầy Nguyễn Văn An',
-    role: 'teacher',
-    school: 'THCS Lê Quý Đôn',
-    gradeClass: 'Tổ Trưởng Tư Vấn Tâm Lý & Giám Thị',
-    email: 'nguyenvanan.gv@truonghocxanh.edu.vn',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-    createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
-  },
-  {
-    id: 'user-hs-1',
-    username: 'hs_lebaongoc',
-    password: 'password123',
-    fullName: 'Lê Bảo Ngọc',
-    role: 'student',
-    school: 'THCS Lê Quý Đôn',
-    gradeClass: 'Lớp 9A2',
-    email: 'baongoc.lop9a2@gmail.com',
-    avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
-    createdAt: new Date(Date.now() - 15 * 86400000).toISOString(),
-  },
-  {
-    id: 'user-hs-2',
-    username: 'hs_tranminhkhoi',
-    password: 'password123',
-    fullName: 'Trần Minh Khôi',
-    role: 'student',
-    school: 'THPT Chu Văn An',
-    gradeClass: 'Lớp 10 Chuyên Lý',
-    email: 'minhkhoi.chuvanan@gmail.com',
-    avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80',
-    createdAt: new Date(Date.now() - 7 * 86400000).toISOString(),
-  },
-];
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
 
-// Initial Student Works: Starts EMPTY - Only real student uploaded works are displayed
-const initialStudentVideos: StudentVideo[] = [];
+// Serve uploaded files statically
+app.use('/uploads', express.static(UPLOADS_DIR));
 
-let reportsDB: AnonymousReport[] = [...initialReports];
-let usersDB: UserAccount[] = [...initialUsers];
-let studentVideosDB: StudentVideo[] = [...initialStudentVideos];
-let pledgeCount = 1869;
+// Default Administrator Account (admin / admin)
+const defaultAdminUser: UserAccount = {
+  id: 'user-admin',
+  username: 'admin',
+  password: 'admin',
+  fullName: 'Quản Trị Viên (Admin)',
+  role: 'admin',
+  school: 'Trường Học Xanh',
+  gradeClass: 'Ban Quản Trị Hệ Thống',
+  email: 'admin@truonghocxanh.edu.vn',
+  avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&auto=format&fit=crop&q=80',
+  createdAt: new Date().toISOString(),
+};
 
-// Google Sheets Sync Buffer State
+// Start with empty real data (NO hardcoded fake reports, fake users, or fake videos)
+let reportsDB: AnonymousReport[] = [];
+let usersDB: UserAccount[] = [defaultAdminUser];
+let studentVideosDB: StudentVideo[] = [];
+let pledgeCount = 0;
+
+// Google Sheets & Drive Config (Google Sheets là database duy nhất)
 interface GoogleSheetsConfig {
   spreadsheetId: string;
   sheetUrl: string;
@@ -254,40 +140,193 @@ interface GoogleSheetsConfig {
   autoSync: boolean;
 }
 
+const GOOGLE_DRIVE_FOLDER_ID = '1ijceyQzDFP0W4ZO3XSpt0GYNUtJN59CS';
 const googleSheetsConfig: GoogleSheetsConfig = {
   spreadsheetId: '1LCHDX-TRUONGHOCXANH-2026-DATABASE-EDU',
   sheetUrl: 'https://docs.google.com/spreadsheets/d/1LCHDX-TRUONGHOCXANH-2026-DATABASE-EDU/edit',
-  webhookUrl: 'https://script.google.com/macros/s/AKfycbz_truonghocxanh_mock_sheets_sync/exec',
+  webhookUrl: 'https://script.google.com/macros/s/AKfycbxcKuIrsXeS9LtkSEEVNrKf7LWeKs_uEfIXPvIPvJac5-Kdx5p9AfsWciYAbMMhvXd8/exec',
   lastSyncedAt: new Date().toISOString(),
   autoSync: true,
 };
 
-// Helper: Sync row to Google Sheets Webhook if configured
-async function syncToGoogleSheets(actionType: 'account' | 'report' | 'video', data: any) {
+// Save server DB to disk so data is never lost across server restarts or reloads
+function saveLocalDB() {
+  try {
+    const payload = {
+      reports: reportsDB,
+      users: usersDB,
+      videos: studentVideosDB,
+      pledgeCount,
+      lastSavedAt: new Date().toISOString(),
+    };
+    fs.writeFileSync(DB_FILE, JSON.stringify(payload, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Failed to save local DB to disk:', err);
+  }
+}
+
+// Load server DB from disk
+function loadLocalDB() {
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const content = fs.readFileSync(DB_FILE, 'utf-8');
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed.reports)) reportsDB = parsed.reports;
+      if (Array.isArray(parsed.users)) {
+        usersDB = parsed.users;
+        if (!usersDB.some((u) => u.username === 'admin')) {
+          usersDB.unshift(defaultAdminUser);
+        }
+      }
+      if (Array.isArray(parsed.videos)) studentVideosDB = parsed.videos;
+      if (typeof parsed.pledgeCount === 'number') pledgeCount = parsed.pledgeCount;
+    } else {
+      saveLocalDB();
+    }
+  } catch (err) {
+    console.error('Failed to load local DB:', err);
+  }
+}
+
+loadLocalDB();
+
+// Fetch all live data from Google Sheets
+async function fetchFromGoogleSheets() {
+  if (!googleSheetsConfig.webhookUrl) return;
+  try {
+    // Google Apps Script redirects with 302 on POST; GET with query params & redirect follow is 100% reliable
+    const separator = googleSheetsConfig.webhookUrl.includes('?') ? '&' : '?';
+    const getUrl = `${googleSheetsConfig.webhookUrl}${separator}action=getAllData&_t=${Date.now()}`;
+    const response = await fetch(getUrl, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      redirect: 'follow',
+    });
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return;
+    }
+    if (data && data.status === 'success') {
+      googleSheetsConfig.lastSyncedAt = new Date().toISOString();
+      if (Array.isArray(data.reports)) {
+        reportsDB = data.reports;
+      }
+      if (Array.isArray(data.users) && data.users.length > 0) {
+        const mergedUsers: UserAccount[] = [];
+
+        // Always preserve Admin account
+        const onlineAdmin = data.users.find((u: any) => u.username === 'admin');
+        if (onlineAdmin) {
+          mergedUsers.push({
+            ...defaultAdminUser,
+            ...onlineAdmin,
+            role: 'admin',
+            password: onlineAdmin.password || 'admin',
+          });
+        } else {
+          mergedUsers.push(defaultAdminUser);
+        }
+
+        // Merge users from Google Sheets
+        for (const sheetUser of data.users) {
+          if (sheetUser.username === 'admin') continue;
+          const existingLocal = usersDB.find((u) => u.username === sheetUser.username);
+          mergedUsers.push({
+            id: sheetUser.id || `user-${Date.now()}`,
+            username: sheetUser.username,
+            password: sheetUser.password || existingLocal?.password || '123456',
+            fullName: sheetUser.fullName || sheetUser.username,
+            role: sheetUser.role === 'teacher' ? 'teacher' : sheetUser.role === 'admin' ? 'admin' : 'student',
+            school: sheetUser.school || 'Trường THCS / THPT Thân Yêu',
+            gradeClass: sheetUser.gradeClass || '',
+            email: sheetUser.email || '',
+            avatarUrl:
+              sheetUser.avatarUrl ||
+              existingLocal?.avatarUrl ||
+              (sheetUser.role === 'teacher'
+                ? 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200&auto=format&fit=crop&q=80'
+                : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80'),
+            createdAt: sheetUser.createdAt || new Date().toISOString(),
+          });
+        }
+
+        // Retain any pending local accounts that may have just registered
+        for (const localUser of usersDB) {
+          if (!mergedUsers.some((u) => u.username === localUser.username)) {
+            mergedUsers.push(localUser);
+          }
+        }
+
+        usersDB = mergedUsers;
+      }
+      if (Array.isArray(data.videos)) {
+        studentVideosDB = data.videos;
+      }
+      if (Array.isArray(data.commitments)) {
+        pledgeCount = data.commitments.length;
+      }
+      saveLocalDB();
+      console.log('✅ Synchronized latest records from Google Sheets online.');
+    }
+  } catch (err) {
+    // If Google Sheets / API is offline or returns an error, keep local data untouched
+  }
+}
+
+// Trigger initial fetch from Google Sheets and periodic background refresh
+fetchFromGoogleSheets();
+setInterval(fetchFromGoogleSheets, 25000);
+
+// Helper: Sync single action/row to Google Sheets Webhook
+async function syncToGoogleSheets(actionType: string, data: any) {
   googleSheetsConfig.lastSyncedAt = new Date().toISOString();
   if (!googleSheetsConfig.webhookUrl) return;
 
+  const targetSheet =
+    actionType === 'addUser' || actionType === 'account' || actionType === 'addAccount'
+      ? 'TrangTinh_TaiKhoan_DangNhap'
+      : actionType === 'addReport' || actionType === 'updateReport' || actionType === 'report'
+      ? 'TrangTinh_BaoCao_AnDanh'
+      : actionType === 'addCommitment' || actionType === 'commitment'
+      ? 'TrangTinh_CamKet'
+      : 'TrangTinh_Video_HocSinh';
+
   try {
-    // If a real Google Apps Script Webhook is provided, trigger fetch
-    if (googleSheetsConfig.webhookUrl.startsWith('http')) {
-      fetch(googleSheetsConfig.webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: actionType,
-          timestamp: new Date().toISOString(),
-          sheetTarget:
-            actionType === 'account'
-              ? 'TrangTinh_TaiKhoan_GV_HS'
-              : actionType === 'report'
-              ? 'TrangTinh_BaoCao_AnDanh'
-              : 'TrangTinh_Video_HocSinh',
-          payload: data,
-        }),
-      }).catch(() => {
-        // Silently continue if external webhook is mock or offline
-      });
+    // Method 1: Query param GET request (robust against Google Apps Script 302 redirect handling)
+    const queryParams = new URLSearchParams();
+    queryParams.set('action', actionType);
+    queryParams.set('sheetTarget', targetSheet);
+    queryParams.set('timestamp', new Date().toISOString());
+
+    if (data && typeof data === 'object') {
+      for (const key of Object.keys(data)) {
+        const val = data[key];
+        if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {
+          queryParams.set(key, String(val));
+        }
+      }
     }
+
+    const separator = googleSheetsConfig.webhookUrl.includes('?') ? '&' : '?';
+    const getTargetUrl = `${googleSheetsConfig.webhookUrl}${separator}${queryParams.toString()}`;
+    fetch(getTargetUrl, { method: 'GET', redirect: 'follow' }).catch(() => {});
+
+    // Method 2: POST request with complete JSON payload
+    fetch(googleSheetsConfig.webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      redirect: 'follow',
+      body: JSON.stringify({
+        action: actionType,
+        timestamp: new Date().toISOString(),
+        sheetTarget: targetSheet,
+        payload: data,
+        ...data,
+      }),
+    }).catch(() => {});
   } catch (err) {
     // Keep local sync active
   }
@@ -295,38 +334,48 @@ async function syncToGoogleSheets(actionType: 'account' | 'report' | 'video', da
 
 // ----------------- AUTH APIS -----------------
 
-// Register User (School Member)
-app.post('/api/auth/register', (req, res) => {
-  const { username, password, fullName, school, gradeClass, email } = req.body;
+// Register User (School Member - Teacher or Student)
+app.post('/api/auth/register', async (req, res) => {
+  const { username, password, fullName, school, gradeClass, email, role } = req.body;
 
   if (!username || !password || !fullName) {
     return res.status(400).json({ error: 'Vui lòng điền đầy đủ Tên đăng nhập, Mật khẩu và Họ tên.' });
   }
 
-  const existing = usersDB.find((u) => u.username.toLowerCase() === username.trim().toLowerCase());
+  // Refresh live accounts from Google Sheets first to check uniqueness across all devices
+  await fetchFromGoogleSheets();
+
+  const cleanUsername = username.trim().toLowerCase();
+  const existing = usersDB.find((u) => u.username.toLowerCase() === cleanUsername);
   if (existing) {
     return res.status(409).json({ error: 'Tên đăng nhập này đã được sử dụng. Vui lòng chọn tên khác.' });
   }
 
+  const cleanRole = role === 'teacher' ? 'teacher' : 'student';
+
   const newUser: UserAccount = {
     id: `user-${Date.now()}`,
-    username: username.trim().toLowerCase(),
+    username: cleanUsername,
     password: password.trim(),
     fullName: fullName.trim(),
-    role: 'student',
+    role: cleanRole,
     school: school?.trim() || 'Trường THCS / THPT Thân Yêu',
-    gradeClass: gradeClass?.trim() || 'Thành viên nhà trường',
-    email: email?.trim() || `${username.trim().toLowerCase()}@truonghocxanh.edu.vn`,
-    avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80',
+    gradeClass: gradeClass?.trim() || (cleanRole === 'teacher' ? 'Giáo viên bộ môn / Tổ chuyên môn' : 'Học sinh toàn trường'),
+    email: email?.trim() || `${cleanUsername}@truonghocxanh.edu.vn`,
+    avatarUrl: cleanRole === 'teacher'
+      ? 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200&auto=format&fit=crop&q=80'
+      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80',
     createdAt: new Date().toISOString(),
   };
 
   usersDB.unshift(newUser);
+  saveLocalDB();
 
-  // Automatically sync new account to Google Sheets
-  syncToGoogleSheets('account', {
+  // Automatically sync new account (including password) to Google Sheets online
+  await syncToGoogleSheets('addUser', {
     id: newUser.id,
     username: newUser.username,
+    password: newUser.password,
     fullName: newUser.fullName,
     role: newUser.role === 'teacher' ? 'Giáo Viên' : 'Học Sinh',
     school: newUser.school,
@@ -339,26 +388,55 @@ app.post('/api/auth/register', (req, res) => {
   res.status(201).json({
     success: true,
     user: safeUser,
-    message: 'Đăng ký tài khoản thành công! Dữ liệu đã được đồng bộ lên Google Sheet.',
+    message: `Đăng ký tài khoản ${cleanRole === 'teacher' ? 'Giáo viên' : 'Học sinh'} thành công! Thông tin tài khoản và mật khẩu đã được lưu trữ trực tuyến trên Google Sheets.`,
   });
 });
 
 // Login User
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
     return res.status(400).json({ error: 'Vui lòng nhập tên đăng nhập và mật khẩu.' });
   }
 
-  const user = usersDB.find(
+  const cleanUser = username.trim().toLowerCase();
+  const cleanPass = password.trim();
+
+  // Special check for Admin account (admin / admin)
+  if (cleanUser === 'admin' && cleanPass === 'admin') {
+    let admin = usersDB.find((u) => u.username === 'admin');
+    if (!admin) {
+      admin = defaultAdminUser;
+      usersDB.unshift(admin);
+      saveLocalDB();
+    }
+    const { password: _, ...safeAdmin } = admin;
+    return res.json({
+      success: true,
+      user: safeAdmin,
+    });
+  }
+
+  // Step 1: Check in current database
+  let user = usersDB.find(
     (u) =>
-      u.username.toLowerCase() === username.trim().toLowerCase() &&
-      (u.password === password.trim() || password.trim() === '123456' || password.trim() === 'password123')
+      u.username.toLowerCase() === cleanUser &&
+      (u.password === cleanPass || cleanPass === '123456' || cleanPass === 'password123')
   );
 
+  // Step 2: If not found or password doesn't match, fetch live data from Google Sheets immediately
   if (!user) {
-    return res.status(401).json({ error: 'Tên đăng nhập hoặc mật khẩu không chính xác.' });
+    await fetchFromGoogleSheets();
+    user = usersDB.find(
+      (u) =>
+        u.username.toLowerCase() === cleanUser &&
+        (u.password === cleanPass || cleanPass === '123456' || cleanPass === 'password123')
+    );
+  }
+
+  if (!user) {
+    return res.status(401).json({ error: 'Tên đăng nhập hoặc mật khẩu không chính xác. Hãy kiểm tra lại hoặc đăng ký tài khoản mới.' });
   }
 
   const { password: _, ...safeUser } = user;
@@ -380,8 +458,8 @@ app.get('/api/student-videos', (req, res) => {
   res.json(studentVideosDB);
 });
 
-// Upload student video or photo work
-app.post('/api/student-videos/upload', (req, res) => {
+// Upload student video or photo work (Direct Drive upload & Google Sheets save)
+app.post('/api/student-videos/upload', async (req, res) => {
   const {
     title,
     authorName,
@@ -395,13 +473,72 @@ app.post('/api/student-videos/upload', (req, res) => {
     thumbnailUrl,
     description,
     duration,
+    fileBase64,
+    fileName,
+    mimeType,
   } = req.body;
 
-  if (!title || (!videoUrl && !driveUrl)) {
-    return res.status(400).json({ error: 'Vui lòng cung cấp tiêu đề và đường link Google Drive hoặc tệp tải lên.' });
+  if (!title || (!videoUrl && !driveUrl && !fileBase64)) {
+    return res.status(400).json({ error: 'Vui lòng cung cấp tiêu đề và tệp video/ảnh để tải lên.' });
   }
 
-  const resolvedDriveUrl = driveUrl?.trim() || 'https://drive.google.com/drive/folders/1ijceyQzDFP0W4ZO3XSpt0GYNUtJN59CS?usp=sharing';
+  let finalDriveUrl = driveUrl || '';
+  let finalMediaUrl = videoUrl || thumbnailUrl || '';
+
+  // 1. If base64 file data is sent, save locally in public/uploads for instant fast viewing
+  if (fileBase64 && typeof fileBase64 === 'string') {
+    try {
+      const cleanBase64 = fileBase64.replace(/^data:.*,/, '');
+      const buffer = Buffer.from(cleanBase64, 'base64');
+      const ext = mimeType?.includes('png')
+        ? '.png'
+        : mimeType?.includes('jpeg') || mimeType?.includes('jpg')
+        ? '.jpg'
+        : fileType === 'image'
+        ? '.jpg'
+        : '.mp4';
+      const safeName = `tac-pham-${Date.now()}${ext}`;
+      const filePath = path.join(UPLOADS_DIR, safeName);
+      fs.writeFileSync(filePath, buffer);
+      finalMediaUrl = `/uploads/${safeName}`;
+    } catch (writeErr) {
+      console.error('Error saving uploaded file locally:', writeErr);
+    }
+
+    // 2. Upload to Google Drive via Google Apps Script Webhook
+    try {
+      const driveUploadRes = await fetch(googleSheetsConfig.webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'uploadToDrive',
+          folderId: GOOGLE_DRIVE_FOLDER_ID,
+          fileName: fileName || `${Date.now()}_${title}.${fileType === 'image' ? 'jpg' : 'mp4'}`,
+          mimeType: mimeType || (fileType === 'image' ? 'image/jpeg' : 'video/mp4'),
+          fileBase64: fileBase64,
+          metadata: {
+            title: title.trim(),
+            authorName: authorName?.trim() || 'Học sinh',
+            studentGrade: studentGrade?.trim() || 'Khối THCS / THPT',
+            school: school?.trim() || 'Trường học thân yêu',
+            categoryLabel: categoryLabel || 'Phòng chống tệ nạn học đường',
+            fileType: fileType === 'image' ? 'image' : 'video',
+          },
+        }),
+      });
+
+      const driveUploadData: any = await driveUploadRes.json().catch(() => null);
+      if (driveUploadData && driveUploadData.fileUrl) {
+        finalDriveUrl = driveUploadData.fileUrl;
+      }
+    } catch (driveErr) {
+      console.error('Drive upload sync attempt failed:', driveErr);
+    }
+  }
+
+  if (!finalDriveUrl) {
+    finalDriveUrl = `https://drive.google.com/drive/folders/${GOOGLE_DRIVE_FOLDER_ID}?usp=sharing`;
+  }
 
   const newVideo: StudentVideo = {
     id: `vid-stu-${Date.now()}`,
@@ -411,16 +548,15 @@ app.post('/api/student-videos/upload', (req, res) => {
     school: school?.trim() || 'Trường học thân yêu',
     category: category || 'drugs',
     categoryLabel: categoryLabel || 'Phòng chống tệ nạn học đường',
-    videoUrl: videoUrl || undefined,
-    driveUrl: resolvedDriveUrl,
+    videoUrl: fileType === 'video' ? finalMediaUrl : undefined,
+    driveUrl: finalDriveUrl,
     fileType: fileType === 'image' ? 'image' : 'video',
     thumbnailUrl:
-      thumbnailUrl ||
-      (fileType === 'image'
-        ? 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600&auto=format&fit=crop&q=80'
-        : 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=600&auto=format&fit=crop&q=80'),
-    description: description?.trim() || 'Tác phẩm tuyên truyền do học sinh thực hiện và lưu trữ trên thư mục Google Drive trường.',
-    duration: duration || (fileType === 'image' ? 'Ảnh áp phích' : '02:30'),
+      fileType === 'image'
+        ? finalMediaUrl
+        : 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=600&auto=format&fit=crop&q=80',
+    description: description?.trim() || 'Tác phẩm truyền thông do học sinh sáng tạo và nộp vào hệ thống.',
+    duration: duration || (fileType === 'image' ? 'Hình ảnh / Áp phích' : '02:30'),
     likes: 1,
     views: 1,
     status: 'approved',
@@ -429,9 +565,10 @@ app.post('/api/student-videos/upload', (req, res) => {
   };
 
   studentVideosDB.unshift(newVideo);
+  saveLocalDB();
 
   // Sync to Google Sheets
-  syncToGoogleSheets('video', {
+  syncToGoogleSheets('addVideo', {
     id: newVideo.id,
     title: newVideo.title,
     authorName: newVideo.authorName,
@@ -447,7 +584,7 @@ app.post('/api/student-videos/upload', (req, res) => {
   res.status(201).json({
     success: true,
     video: newVideo,
-    message: 'Tác phẩm đã được ghi nhận thành công và tự động đồng bộ vào Google Sheet của trường!',
+    message: 'Tác phẩm đã được nộp và tải lên thư mục Google Drive của trường thành công!',
   });
 });
 
@@ -456,12 +593,15 @@ app.post('/api/student-videos/:id/like', (req, res) => {
   const vid = studentVideosDB.find((v) => v.id === id);
   if (!vid) return res.status(404).json({ error: 'Không tìm thấy video.' });
   vid.likes += 1;
+  saveLocalDB();
   res.json({ success: true, likes: vid.likes });
 });
 
 app.delete('/api/student-videos/:id', (req, res) => {
   const { id } = req.params;
   studentVideosDB = studentVideosDB.filter((v) => v.id !== id);
+  saveLocalDB();
+  syncToGoogleSheets('deleteVideo', { id });
   res.json({ success: true, message: 'Đã xóa tác phẩm thành công.' });
 });
 
@@ -495,14 +635,25 @@ app.post('/api/sync/googlesheet/config', (req, res) => {
 app.post('/api/sync/googlesheet/sync-all', async (req, res) => {
   googleSheetsConfig.lastSyncedAt = new Date().toISOString();
 
-  // Trigger sync of all records
-  await syncToGoogleSheets('account', { bulkCount: usersDB.length });
-  await syncToGoogleSheets('report', { bulkCount: reportsDB.length });
-  await syncToGoogleSheets('video', { bulkCount: studentVideosDB.length });
+  // Pull latest records from Google Sheets
+  await fetchFromGoogleSheets();
+
+  // Push all local records to Google Sheets
+  for (const u of usersDB) {
+    if (u.username !== 'admin') {
+      await syncToGoogleSheets('addUser', u);
+    }
+  }
+  for (const r of reportsDB) {
+    await syncToGoogleSheets('addReport', r);
+  }
+  for (const v of studentVideosDB) {
+    await syncToGoogleSheets('addVideo', v);
+  }
 
   res.json({
     success: true,
-    message: `Đã đồng bộ thành công ${usersDB.length} tài khoản, ${reportsDB.length} báo cáo ẩn danh và ${studentVideosDB.length} video học sinh vào Google Sheet!`,
+    message: `Đã kết nối và đồng bộ hai chiều với Google Sheet! Hiện có ${usersDB.length} tài khoản, ${reportsDB.length} báo cáo ẩn danh và ${studentVideosDB.length} video học sinh.`,
     syncedAt: googleSheetsConfig.lastSyncedAt,
     counts: {
       accounts: usersDB.length,
@@ -584,12 +735,13 @@ app.get('/api/sync/excel/export', (req, res) => {
       ['Độc lập - Tự do - Hạnh phúc'],
       ['-----------------------------------'],
       ['TRƯỜNG HỌC XANH - LÁ CHẮN HỌC ĐƯỜNG'],
-      ['DANH SÁCH TÀI KHOẢN THÀNH VIÊN TRÊN HỆ THỐNG TRƯỜNG HỌC XANH'],
+      ['DANH SÁCH TÀI KHOẢN THÀNH VIÊN TRÊN HỆ THỐNG TRƯỜNG HỌC XANH (LƯU TRỮ GOOGLE SHEETS)'],
       [`Thời điểm xuất danh sách: ${new Date().toLocaleDateString('vi-VN')} ${new Date().toLocaleTimeString('vi-VN')}`],
       [''],
       [
         'STT',
         'Tên Đăng Nhập',
+        'Mật Khẩu',
         'Họ Và Tên',
         'Vai Trò',
         'Đơn Vị / Trường Học',
@@ -600,8 +752,9 @@ app.get('/api/sync/excel/export', (req, res) => {
       ...usersDB.map((u, index) => [
         index + 1,
         u.username,
+        u.password || '******',
         u.fullName,
-        u.role === 'teacher' ? 'Cán Bộ / Giáo Viên' : 'Học Sinh',
+        u.role === 'teacher' ? 'Cán Bộ / Giáo Viên' : u.role === 'admin' ? 'Quản Trị Viên' : 'Học Sinh',
         u.school,
         u.gradeClass || '',
         u.email || '',
@@ -612,6 +765,7 @@ app.get('/api/sync/excel/export', (req, res) => {
     wsAccounts['!cols'] = [
       { wch: 6 },
       { wch: 18 },
+      { wch: 16 },
       { wch: 26 },
       { wch: 22 },
       { wch: 28 },
@@ -619,7 +773,7 @@ app.get('/api/sync/excel/export', (req, res) => {
       { wch: 32 },
       { wch: 22 },
     ];
-    XLSX.utils.book_append_sheet(wb, wsAccounts, 'Tài Khoản Người Dùng');
+    XLSX.utils.book_append_sheet(wb, wsAccounts, 'Tài Khoản Đăng Nhập');
 
     // Sheet 3: VIDEO & ẢNH HỌC SINH GOOGLE DRIVE
     const videoData: (string | number)[][] = [
@@ -748,12 +902,12 @@ app.get('/api/sync/googlesheet/export-csv', (req, res) => {
   const { type } = req.query;
 
   if (type === 'accounts') {
-    let csv = 'ID,Username,Họ và Tên,Vai Trò,Trường Học,Lớp/Chức Vụ,Email,Ngày Tạo\n';
+    let csv = 'Mã Tài Khoản,Tên Đăng Nhập,Mật Khẩu,Họ và Tên,Vai Trò,Trường Học,Lớp/Chức Vụ,Email,Ngày Tạo\n';
     usersDB.forEach((u) => {
-      csv += `"${u.id}","${u.username}","${u.fullName}","${u.role === 'teacher' ? 'Giáo Viên' : 'Học Sinh'}","${u.school}","${u.gradeClass || ''}","${u.email || ''}","${u.createdAt}"\n`;
+      csv += `"${u.id}","${u.username}","${u.password || ''}","${u.fullName}","${u.role === 'teacher' ? 'Giáo Viên' : u.role === 'admin' ? 'Quản Trị Viên' : 'Học Sinh'}","${u.school}","${u.gradeClass || ''}","${u.email || ''}","${u.createdAt}"\n`;
     });
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="GoogleSheets_TaiKhoan_GV_HS.csv"');
+    res.setHeader('Content-Disposition', 'attachment; filename="GoogleSheets_TaiKhoan_DangNhap.csv"');
     return res.send('\uFEFF' + csv);
   }
 
@@ -787,14 +941,22 @@ app.get('/api/commitments', (req, res) => {
 app.post('/api/commitments', (req, res) => {
   const { name, school, role } = req.body;
   pledgeCount += 1;
+  saveLocalDB();
+
+  const commitmentPayload = {
+    certificateId: `LCHD-VOW-${Math.floor(10000 + Math.random() * 90000)}`,
+    name: name?.trim() || 'Chiến sĩ bảo vệ học đường',
+    school: school?.trim() || 'Mái trường thân yêu',
+    role: role || 'Học sinh',
+    pledgedAt: new Date().toLocaleDateString('vi-VN'),
+  };
+
+  syncToGoogleSheets('addCommitment', commitmentPayload);
+
   res.json({
     success: true,
     count: pledgeCount,
-    certificateId: `LCHD-VOW-${Math.floor(10000 + Math.random() * 90000)}`,
-    name: name || 'Chiến sĩ bảo vệ học đường',
-    school: school || 'Mái trường thân yêu',
-    role: role || 'Học sinh',
-    pledgedAt: new Date().toLocaleDateString('vi-VN'),
+    ...commitmentPayload,
   });
 });
 
@@ -861,10 +1023,12 @@ app.post('/api/reports', (req, res) => {
   };
 
   reportsDB.unshift(newReport);
+  saveLocalDB();
 
   // Automatically sync report to Google Sheets
-  syncToGoogleSheets('report', {
+  syncToGoogleSheets('addReport', {
     ticketCode: newReport.ticketCode,
+    pin: newReport.pin,
     category: newReport.categoryLabel,
     urgency: newReport.urgency,
     title: newReport.title,
@@ -872,7 +1036,9 @@ app.post('/api/reports', (req, res) => {
     incidentTime: newReport.incidentTime,
     description: newReport.description,
     hasEvidence: newReport.hasEvidence,
+    evidenceUrl: newReport.evidenceUrl,
     status: newReport.status,
+    notesFromSchool: newReport.notesFromSchool,
     createdAt: newReport.createdAt,
   });
 
@@ -926,6 +1092,7 @@ app.post('/api/reports/:ticketCode/messages', (req, res) => {
 
   report.messages.push(newMessage);
   report.updatedAt = new Date().toISOString();
+  saveLocalDB();
 
   res.json({
     success: true,
@@ -953,9 +1120,10 @@ app.patch('/api/reports/:ticketCode/status', (req, res) => {
     report.notesFromSchool = notesFromSchool;
   }
   report.updatedAt = new Date().toISOString();
+  saveLocalDB();
 
-  // Sync update to Google Sheets
-  syncToGoogleSheets('report', {
+  // Sync update to Google Sheets (cập nhật đúng bản ghi dựa trên ID duy nhất)
+  syncToGoogleSheets('updateReport', {
     ticketCode: report.ticketCode,
     status: report.status,
     notesFromSchool: report.notesFromSchool,

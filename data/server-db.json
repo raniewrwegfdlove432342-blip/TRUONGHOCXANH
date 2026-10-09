@@ -1,0 +1,75 @@
+{
+  "reports": [],
+  "users": [
+    {
+      "id": "user-admin",
+      "username": "admin",
+      "password": "admin",
+      "fullName": "Quản Trị Viên (Admin)",
+      "role": "admin",
+      "school": "Trường Học Xanh",
+      "gradeClass": "Ban Quản Trị Hệ Thống",
+      "email": "admin@truonghocxanh.edu.vn",
+      "avatarUrl": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&auto=format&fit=crop&q=80",
+      "createdAt": "2026-10-09T03:58:12.717Z"
+    },
+    {
+      "id": "user-1",
+      "username": "testuser",
+      "password": "123456",
+      "fullName": "NguyenVanA",
+      "role": "student",
+      "school": "THPT Le Quy Don",
+      "gradeClass": "12A1",
+      "email": "test@gmail.com",
+      "avatarUrl": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80",
+      "createdAt": "2026-10-09T03:52:55.711Z"
+    },
+    {
+      "id": "user-1791518308339",
+      "username": "thayhoang",
+      "password": "MatKhauGV@2026",
+      "fullName": "Thầy Hoàng Văn Nam",
+      "role": "teacher",
+      "school": "THPT Chuyên Hà Nội",
+      "gradeClass": "Tổ Hóa Học & Ban Tư Vấn Học Đường",
+      "email": "namhv@truong.edu.vn",
+      "avatarUrl": "https://images.unsplash.com/photo-1544717305-2782549b5136?w=200&auto=format&fit=crop&q=80",
+      "createdAt": "2026-10-09T03:58:28.339Z"
+    },
+    {
+      "id": "user-1791518308339",
+      "username": "thayhoang",
+      "password": "MatKhauGV@2026",
+      "fullName": "Thầy Hoàng Văn Nam",
+      "role": "teacher",
+      "school": "THPT Chuyên Hà Nội",
+      "gradeClass": "Tổ Hóa Học & Ban Tư Vấn Học Đường",
+      "email": "namhv@truong.edu.vn",
+      "avatarUrl": "https://images.unsplash.com/photo-1544717305-2782549b5136?w=200&auto=format&fit=crop&q=80",
+      "createdAt": "2026-10-09T03:58:28.339Z"
+    }
+  ],
+  "videos": [
+    {
+      "id": "vid-1791516054731",
+      "title": "DSAD",
+      "authorName": "Quản Trị Viên (Admin)",
+      "studentGrade": "Ban Quản Trị Hệ Thống",
+      "school": "Trường Học Xanh",
+      "categoryLabel": "Phòng chống Thuốc lá điện tử & Pod",
+      "category": "drugs",
+      "fileType": "image",
+      "driveUrl": "https://drive.google.com/file/d/1SPQkrza9RtYTHRUfCsTW5RpRuFCD2_dL/view?usp=drivesdk",
+      "thumbnailUrl": "https://drive.google.com/file/d/1SPQkrza9RtYTHRUfCsTW5RpRuFCD2_dL/view?usp=drivesdk",
+      "description": "Tác phẩm lưu trữ Google Drive",
+      "duration": "Hình ảnh",
+      "likes": 1,
+      "views": 1,
+      "status": "approved",
+      "uploadedAt": "2026-10-09T03:20:54.731Z"
+    }
+  ],
+  "pledgeCount": 1,
+  "lastSavedAt": "2026-10-09T03:58:41.414Z"
+}

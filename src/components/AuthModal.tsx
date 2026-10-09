@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, User, Lock, Sparkles, CheckCircle2, AlertCircle, FileSpreadsheet } from 'lucide-react';
+import { X, User, Lock, Sparkles, CheckCircle2, AlertCircle, FileSpreadsheet, GraduationCap, School } from 'lucide-react';
 import { UserAccount } from '../types';
 
 interface AuthModalProps {
@@ -10,11 +10,14 @@ interface AuthModalProps {
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }) => {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [registerRole, setRegisterRole] = useState<'student' | 'teacher'>('student');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [school, setSchool] = useState('');
   const [gradeClass, setGradeClass] = useState('');
+  const [studentCode, setStudentCode] = useState('');
+  const [departmentOrTitle, setDepartmentOrTitle] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -30,25 +33,35 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
 
     try {
       if (isRegisterMode) {
+        const payloadRole = registerRole;
+        const payloadGradeClass =
+          payloadRole === 'teacher'
+            ? departmentOrTitle.trim() || 'Giáo viên bộ môn'
+            : gradeClass.trim() || 'Học sinh toàn trường';
+
         const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            username,
-            password,
-            fullName,
-            school: school || 'Trường THCS / THPT Thân Yêu',
-            gradeClass: gradeClass || 'Toàn trường',
-            email,
+            username: username.trim(),
+            password: password.trim(),
+            fullName: fullName.trim(),
+            role: payloadRole,
+            school: school.trim() || 'Trường THCS / THPT Thân Yêu',
+            gradeClass: payloadGradeClass,
+            email: email.trim(),
+            studentCode: payloadRole === 'student' ? studentCode.trim() : undefined,
           }),
         });
         const data = await res.json();
         if (res.ok) {
-          setSuccessMsg('Đăng ký thành công! Đang đăng nhập...');
+          setSuccessMsg(
+            `Đăng ký tài khoản ${payloadRole === 'teacher' ? 'Thầy Cô (GV)' : 'Học Sinh (HS)'} thành công! Đang đăng nhập...`
+          );
           setTimeout(() => {
             onLoginSuccess(data.user);
             onClose();
-          }, 800);
+          }, 900);
         } else {
           setErrorMsg(data.error || 'Đăng ký thất bại. Vui lòng thử lại.');
         }
@@ -84,50 +97,68 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
         </button>
 
         {/* Header */}
-        <div className="text-center mb-5">
+        <div className="text-center mb-4">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-2">
             <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
             <span>HỆ THỐNG XÁC THỰC TRƯỜNG HỌC XANH</span>
           </div>
           <h2 className="text-xl font-black text-slate-900 tracking-tight">
-            {isRegisterMode ? 'Đăng Ký Tài Khoản' : 'Đăng Nhập'}
+            {isRegisterMode ? 'Đăng Ký Tài Khoản Mới' : 'Đăng Nhập'}
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Quản trị viên (admin / admin) và thành viên toàn trường
+            {isRegisterMode
+              ? 'Tùy chọn đăng ký dành riêng cho Giáo viên (GV) hoặc Học sinh (HS)'
+              : 'Hệ thống đăng nhập dành cho Quản trị viên, Thầy Cô và Học sinh'}
           </p>
         </div>
 
-        {/* Quick Admin Login Box */}
-        {!isRegisterMode && (
-          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-2xl">
-            <div className="text-[11px] font-bold text-amber-950 mb-1.5 flex items-center justify-between">
-              <span>Tài khoản Quản Trị Viên (Admin):</span>
-              <span className="text-[10px] text-amber-700 font-mono font-bold">tk: admin | mk: admin</span>
+        {/* 2 Modes Role Selector for Registration */}
+        {isRegisterMode && (
+          <div className="mb-4">
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+              Chọn đối tượng đăng ký tài khoản: <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setRegisterRole('student')}
+                className={`py-2.5 px-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 border-2 transition ${
+                  registerRole === 'student'
+                    ? 'border-emerald-600 bg-emerald-50 text-emerald-900 shadow-sm'
+                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <GraduationCap className={`w-4 h-4 ${registerRole === 'student' ? 'text-emerald-600' : 'text-slate-400'}`} />
+                <span>🎓 Học Sinh (HS)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRegisterRole('teacher')}
+                className={`py-2.5 px-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 border-2 transition ${
+                  registerRole === 'teacher'
+                    ? 'border-teal-600 bg-teal-50 text-teal-900 shadow-sm'
+                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <School className={`w-4 h-4 ${registerRole === 'teacher' ? 'text-teal-600' : 'text-slate-400'}`} />
+                <span>👨‍🏫 Giáo Viên (GV)</span>
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setUsername('admin');
-                setPassword('admin');
-              }}
-              className="w-full py-2 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 transition shadow-xs active:scale-98"
-            >
-              <span>🔑 Điền nhanh tài khoản Admin (admin / admin)</span>
-            </button>
           </div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-3.5">
+        <form onSubmit={handleSubmit} className="space-y-3">
           {isRegisterMode && (
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Họ và tên đầy đủ: <span className="text-red-500">*</span>
+                {registerRole === 'teacher' ? 'Họ và tên Thầy / Cô:' : 'Họ và tên Học sinh:'} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 required
-                placeholder="Ví dụ: Nguyễn Phương Linh"
+                placeholder={registerRole === 'teacher' ? 'Ví dụ: Cô Nguyễn Thị Mai' : 'Ví dụ: Trần Minh Đức'}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500"
@@ -135,29 +166,95 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
             </div>
           )}
 
-          {isRegisterMode && (
-            <div className="grid grid-cols-2 gap-2">
+          {isRegisterMode && registerRole === 'student' && (
+            <>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Trường học: <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ví dụ: THCS Chu Văn An"
+                    value={school}
+                    onChange={(e) => setSchool(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Lớp / Khối: <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ví dụ: Lớp 8A3"
+                    value={gradeClass}
+                    onChange={(e) => setGradeClass(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Trường học:</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Mã học sinh / Số thẻ học sinh (nếu có):
+                </label>
                 <input
                   type="text"
-                  placeholder="Ví dụ: THCS Lê Quý Đôn"
+                  placeholder="Ví dụ: HS2026-88 (không bắt buộc)"
+                  value={studentCode}
+                  onChange={(e) => setStudentCode(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs"
+                />
+              </div>
+            </>
+          )}
+
+          {isRegisterMode && registerRole === 'teacher' && (
+            <>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Trường công tác: <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ví dụ: THPT Chuyên Hà Nội - Amsterdam"
                   value={school}
                   onChange={(e) => setSchool(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-teal-500"
                 />
               </div>
+
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Lớp học:</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Tổ chuyên môn / Chức vụ / Bộ môn: <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
-                  placeholder="Ví dụ: Lớp 9A2"
-                  value={gradeClass}
-                  onChange={(e) => setGradeClass(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
+                  required
+                  placeholder="Ví dụ: GVCN Lớp 10A1 / Tổ Khoa Học Xã Hội / Tổng Phụ Trách"
+                  value={departmentOrTitle}
+                  onChange={(e) => setDepartmentOrTitle(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-teal-500"
                 />
               </div>
-            </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Email công tác / SĐT liên hệ:
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: giaovien@hanoiamsterdam.edu.vn"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs"
+                />
+              </div>
+            </>
           )}
 
           <div>
@@ -168,7 +265,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
               <input
                 type="text"
                 required
-                placeholder="Ví dụ: lebaongoc hoặc gv_an"
+                placeholder={isRegisterMode ? (registerRole === 'teacher' ? 'Ví dụ: gv_maith' : 'Ví dụ: lebaongoc_8a') : 'Nhập tên đăng nhập...'}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500"
@@ -198,7 +295,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
           <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] text-emerald-900 flex items-start gap-2">
             <FileSpreadsheet className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
             <span>
-              <strong>Lưu trữ tập trung:</strong> Mọi tài khoản và báo cáo mới sẽ được tự động lưu và đồng bộ lên Google Sheet quản lý của nhà trường.
+              <strong>Lưu trữ trực tuyến:</strong> Tài khoản và mật khẩu được lưu vào trang tính <code>TrangTinh_TaiKhoan_DangNhap</code> trên Google Sheets, cho phép đăng nhập từ bất kỳ thiết bị nào.
             </span>
           </div>
 
@@ -221,7 +318,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
             disabled={loading}
             className="w-full py-3 bg-linear-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black rounded-xl text-xs sm:text-sm shadow-md transition disabled:opacity-50"
           >
-            {loading ? 'Đang xử lý...' : isRegisterMode ? 'Đăng Ký & Đồng Bộ Google Sheet' : 'Đăng Nhập Hệ Thống'}
+            {loading
+              ? 'Đang xử lý...'
+              : isRegisterMode
+              ? `Đăng Ký Tài Khoản ${registerRole === 'teacher' ? 'Giáo Viên' : 'Học Sinh'} & Lưu Google Sheet`
+              : 'Đăng Nhập Hệ Thống'}
           </button>
         </form>
 
@@ -252,7 +353,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
                 }}
                 className="font-bold text-emerald-700 hover:underline"
               >
-                Tạo tài khoản thành viên mới
+                Tạo tài khoản mới (GV & HS)
               </button>
             </div>
           )}
@@ -261,3 +362,4 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
     </div>
   );
 };
+

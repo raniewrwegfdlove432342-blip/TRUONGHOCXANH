@@ -12,10 +12,15 @@ import {
   Sparkles,
   Shuffle,
   Download,
+  Share2,
+  Copy,
+  Check,
+  ExternalLink,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { QUIZ_QUESTIONS } from '../data/mockData';
 import { QuizQuestion } from '../types';
+import { downloadCertificateImage } from '../utils/certificateGenerator';
 
 // Helper: Fisher-Yates shuffle to pick 10 random distinct questions without replacement
 function getRandom10Questions(): QuizQuestion[] {
@@ -34,6 +39,58 @@ export const QuizView: React.FC = () => {
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState<Record<number, boolean>>({});
   const [isFinished, setIsFinished] = useState(false);
   const [studentName, setStudentName] = useState('');
+  const [statusFeedback, setStatusFeedback] = useState<string | null>(null);
+  const [showSharePanel, setShowSharePanel] = useState(false);
+  const [copiedSuccess, setCopiedSuccess] = useState(false);
+
+  const handleDownloadQuizCertificate = () => {
+    const certName = studentName.trim() || 'Học Sinh Trường Học Xanh';
+    const ok = downloadCertificateImage({
+      title: 'CHỨNG NHẬN CHIẾN SĨ BẢN LĨNH',
+      recipientName: certName,
+      schoolOrOrg: 'Phong Trào Lá Chắn Học Đường',
+      roleLabel: scorePercent >= 80 ? 'Huy Hiệu Vàng Xuất Sắc' : 'Chiến Sĩ Trường Học Xanh',
+      citationText: `Đã hoàn thành xuất sắc bài kiểm tra trắc nghiệm 10 câu ngẫu nhiên với kết quả ${totalCorrect}/${questions.length} câu (${scorePercent}%), nắm vững kiến thức nhận diện Ma túy ngụy trang, tác hại Thuốc lá điện tử và Kỹ năng ứng phó Bạo lực học đường.`,
+      certificateId: `QUIZ-${Date.now().toString().slice(-6)}`,
+      dateStr: new Date().toLocaleDateString('vi-VN'),
+      badgeText: 'KẾT QUẢ SÁT HẠCH KIẾN THỨC BẢN LĨNH',
+    });
+
+    if (ok) {
+      setStatusFeedback('✓ Đã tải ảnh chứng nhận (.PNG) về máy của bạn!');
+      setTimeout(() => setStatusFeedback(null), 4000);
+    }
+  };
+
+  const handleShareQuizResult = async () => {
+    setShowSharePanel(true);
+    const certName = studentName.trim() || 'Học sinh';
+    const shareText = `🎉 Em (${certName}) vừa đạt kết quả ${totalCorrect}/10 (${scorePercent}%) trong cuộc thi Trắc nghiệm Bản Lĩnh "Lá Chắn Học Đường"!\n👉 Cùng thử sức và rèn luyện kiến thức phòng chống Ma túy, Thuốc lá điện tử, Bạo lực học đường tại: ${window.location.origin}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Chiến sĩ Bản lĩnh Lá Chắn Học Đường',
+          text: shareText,
+          url: window.location.origin,
+        });
+        setStatusFeedback('✓ Đã mở trình chia sẻ trên thiết bị!');
+        setTimeout(() => setStatusFeedback(null), 3000);
+        return;
+      } catch (err) {
+        // Fallback
+      }
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(shareText).then(() => {
+        setCopiedSuccess(true);
+        setStatusFeedback('✓ Đã sao chép nội dung chia sẻ kết quả vào bộ nhớ tạm!');
+        setTimeout(() => setCopiedSuccess(false), 3000);
+        setTimeout(() => setStatusFeedback(null), 4000);
+      });
+    }
+  };
 
   const currentQ = questions[currentQuestionIndex];
   const selectedIdx = selectedAnswers[currentQ?.id];
@@ -304,32 +361,114 @@ export const QuizView: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-3">
+          {statusFeedback && (
+            <div className="p-3 max-w-md mx-auto rounded-xl bg-emerald-50 border border-emerald-300 text-xs text-emerald-900 font-bold flex items-center justify-center gap-2 animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{statusFeedback}</span>
+            </div>
+          )}
+
+          <div className="flex flex-wrap justify-center gap-2.5">
+            <button
+              onClick={handleDownloadQuizCertificate}
+              className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-sm active:scale-98"
+              title="Tải ảnh chứng nhận dạng PNG về máy"
+            >
+              <Download className="w-4 h-4 text-emerald-200" />
+              <span>Lưu Chứng Nhận (Ảnh PNG)</span>
+            </button>
+
+            <button
+              onClick={handleShareQuizResult}
+              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-sm active:scale-98"
+              title="Lan tỏa kết quả và lời kêu gọi đến bạn bè"
+            >
+              <Share2 className="w-4 h-4 text-blue-200" />
+              <span>Lan Tỏa Kết Quả</span>
+            </button>
+
             <button
               onClick={() => window.print()}
-              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
+              className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
             >
               <Printer className="w-4 h-4" />
-              In Giấy Chứng Nhận
+              In Bản Giấy
             </button>
 
             <a
               href="/api/sync/excel/export"
-              className="px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-xs"
+              className="px-4 py-2.5 bg-teal-800 hover:bg-teal-900 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-xs"
               title="Xuất file Excel chứa ngân hàng câu hỏi gốc chuẩn thể thức"
             >
-              <Download className="w-4 h-4 text-emerald-300" />
-              Xuất Ngân Hàng Câu Hỏi Ra Excel (.xlsx)
+              <Download className="w-4 h-4 text-teal-300" />
+              Xuất Ngân Hàng Câu Hỏi (.xlsx)
             </a>
 
             <button
               onClick={handleRestartNewQuiz}
-              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-xs"
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-xs"
             >
               <Shuffle className="w-4 h-4" />
-              Làm Đề Mới (10 Câu Ngẫu Nhiên Khác)
+              Làm Đề Mới (10 Câu Khác)
             </button>
           </div>
+
+          {showSharePanel && (
+            <div className="max-w-md mx-auto p-4 bg-blue-50 border border-blue-200 rounded-2xl space-y-3 text-left animate-in fade-in">
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+                  <Share2 className="w-4 h-4 text-blue-600" />
+                  <span>Lan Tỏa Thành Tích & Kêu Gọi Bạn Bè</span>
+                </div>
+                <button
+                  onClick={() => setShowSharePanel(false)}
+                  className="text-xs text-slate-400 hover:text-slate-600"
+                >
+                  Đóng
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={handleShareQuizResult}
+                  className="px-3 py-2 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 flex items-center gap-1.5 shadow-xs"
+                >
+                  {copiedSuccess ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-600" />
+                      <span className="text-emerald-700 font-bold">Đã sao chép!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4 text-slate-600" />
+                      <span>Sao chép tin nhắn</span>
+                    </>
+                  )}
+                </button>
+
+                <a
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-2 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Đăng Facebook</span>
+                </a>
+
+                <button
+                  onClick={() => {
+                    handleShareQuizResult();
+                    window.open('https://chat.zalo.me/', '_blank');
+                  }}
+                  className="px-3 py-2 bg-[#0068FF] hover:bg-[#005cd6] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Gửi Zalo nhóm</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

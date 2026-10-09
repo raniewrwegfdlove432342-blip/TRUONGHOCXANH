@@ -215,14 +215,19 @@ export const GoogleSheetSyncModal: React.FC<GoogleSheetSyncModalProps> = ({
           </div>
         </div>
 
-        {/* Google Apps Script Webhook config (Optional live hook) */}
-        <div className="p-3.5 bg-emerald-50/50 border border-emerald-200 rounded-2xl text-xs space-y-2">
-          <div className="font-bold text-emerald-950 flex items-center gap-1.5">
-            <Link2 className="w-4 h-4 text-emerald-700" />
-            <span>Kết nối Google Apps Script Webhook của trường (Tùy chọn):</span>
+        {/* Google Apps Script Webhook config & Live Sync URL */}
+        <div className="p-3.5 bg-emerald-50/70 border border-emerald-300 rounded-2xl text-xs space-y-2.5">
+          <div className="font-black text-emerald-950 flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Link2 className="w-4 h-4 text-emerald-700" />
+              <span>Đường Dẫn Google Apps Script Webhook Của Trường:</span>
+            </div>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-900 font-bold">
+              Database Chính
+            </span>
           </div>
-          <p className="text-[11px] text-slate-600 leading-relaxed">
-            Dán đường dẫn Webhook Deploy từ Google Sheet của trường để đẩy thẳng từng dòng vào bảng tính thật:
+          <p className="text-[11px] text-slate-700 leading-relaxed">
+            Google Sheets là nguồn dữ liệu duy nhất của ứng dụng. Mọi tài khoản, báo cáo ẩn danh và video đều đọc/ghi trực tiếp qua Apps Script:
           </p>
           <div className="flex gap-2">
             <input
@@ -234,10 +239,218 @@ export const GoogleSheetSyncModal: React.FC<GoogleSheetSyncModalProps> = ({
             />
             <button
               onClick={handleSaveWebhook}
-              className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs"
+              className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs shrink-0"
             >
               {savedWebhookMsg ? <Check className="w-4 h-4" /> : 'Lưu URL'}
             </button>
+          </div>
+
+          {/* Quick Copy Apps Script Code.gs Guide */}
+          <div className="pt-2 border-t border-emerald-200/80">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="font-bold text-emerald-900 text-[11px]">
+                Mã Code.gs chuẩn hóa (Hỗ trợ 4 sheet & Tải thẳng Google Drive):
+              </span>
+              <button
+                onClick={() => {
+                  const codeSnippet = `/**
+ * GOOGLE APPS SCRIPT CHO HỆ THỐNG TRƯỜNG HỌC XANH - LÁ CHẮN HỌC ĐƯỜNG
+ * Thư mục Google Drive: 1ijceyQzDFP0W4ZO3XSpt0GYNUtJN59CS
+ */
+var DRIVE_FOLDER_ID = "1ijceyQzDFP0W4ZO3XSpt0GYNUtJN59CS";
+
+function doGet(e) {
+  return handleRequest(e, "GET");
+}
+
+function doPost(e) {
+  return handleRequest(e, "POST");
+}
+
+function handleRequest(e, method) {
+  var output = ContentService.createTextOutput();
+  output.setMimeType(ContentService.MimeType.JSON);
+  try {
+    var data = {};
+    if (e && e.postData && e.postData.contents) {
+      try { data = JSON.parse(e.postData.contents); } catch(err) { data = {}; }
+    } else if (e && e.parameter) {
+      data = e.parameter;
+    }
+    var action = data.action || (e && e.parameter ? e.parameter.action : "getAllData");
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+    var sheetReports = getOrCreateSheet(ss, "TrangTinh_BaoCao_AnDanh", ["Mã Hồ Sơ", "PIN", "Mức Độ", "Chủ Đề", "Tiêu Đề", "Địa Điểm", "Thời Gian", "Mô Tả Chi Tiết", "Có Bằng Chứng", "Link Bằng Chứng", "Trạng Thái", "Ghi Chú Nhà Trường", "Ngày Tiếp Nhận", "Ngày Cập Nhật"]);
+    var sheetAuthUsers = getOrCreateSheet(ss, "TrangTinh_TaiKhoan_DangNhap", ["Mã Tài Khoản", "Tên Đăng Nhập", "Mật Khẩu", "Họ Và Tên", "Vai Trò", "Trường Học", "Lớp/Chức Vụ", "Email/SĐT", "Ngày Đăng Ký"]);
+    var sheetUsers = getOrCreateSheet(ss, "TrangTinh_TaiKhoan_GV_HS", ["Mã Người Dùng", "Tên Đăng Nhập", "Mật Khẩu", "Họ Và Tên", "Vai Trò", "Trường Học", "Lớp/Chức Vụ", "Email", "Ngày Đăng Ký"]);
+    var sheetVideos = getOrCreateSheet(ss, "TrangTinh_Video_HocSinh", ["Mã Tác Phẩm", "Tiêu Đề", "Tác Giả", "Lớp", "Trường Học", "Chủ Đề", "Loại Tệp", "Đường Link Google Drive", "Thời Lượng", "Lượt Thích", "Lượt Xem", "Trạng Thái", "Ngày Tải Lên"]);
+    var sheetCommitments = getOrCreateSheet(ss, "TrangTinh_CamKet", ["Mã Cam Kết", "Họ Và Tên", "Trường Học", "Vai Trò", "Ngày Cam Kết"]);
+
+    if (action === "getAllData" || action === "read") {
+      output.setContent(JSON.stringify({
+        status: "success",
+        reports: readSheetReports(sheetReports),
+        users: readSheetUsers(sheetAuthUsers, sheetUsers),
+        videos: readSheetVideos(sheetVideos),
+        commitments: readSheetCommitments(sheetCommitments)
+      }));
+      return output;
+    }
+
+    if (action === "addReport" || action === "report") {
+      var r = data.payload || data;
+      sheetReports.appendRow([r.ticketCode || "", r.pin || "", r.urgency || "medium", r.categoryLabel || r.category || "", r.title || "", r.location || "", r.incidentTime || "", r.description || "", r.hasEvidence ? "Có" : "Không", r.evidenceUrl || "", r.status || "received", r.notesFromSchool || "", r.createdAt || new Date().toISOString(), r.updatedAt || new Date().toISOString()]);
+      output.setContent(JSON.stringify({ status: "success" }));
+      return output;
+    }
+
+    if (action === "updateReport") {
+      var ticketCode = data.ticketCode || data.id;
+      var newStatus = data.status;
+      var notes = data.notesFromSchool;
+      var rows = sheetReports.getDataRange().getValues();
+      var found = false;
+      for (var i = 1; i < rows.length; i++) {
+        if (String(rows[i][0]).toUpperCase() === String(ticketCode).toUpperCase()) {
+          if (newStatus) sheetReports.getRange(i + 1, 11).setValue(newStatus);
+          if (notes !== undefined) sheetReports.getRange(i + 1, 12).setValue(notes);
+          sheetReports.getRange(i + 1, 14).setValue(new Date().toISOString());
+          found = true;
+          break;
+        }
+      }
+      output.setContent(JSON.stringify({ status: found ? "success" : "not_found" }));
+      return output;
+    }
+
+    if (action === "addUser" || action === "account" || action === "addAccount") {
+      var u = data.payload || data;
+      sheetAuthUsers.appendRow([u.id || "", u.username || "", u.password || "", u.fullName || "", u.role || "student", u.school || "", u.gradeClass || "", u.email || "", u.createdAt || new Date().toISOString()]);
+      sheetUsers.appendRow([u.id || "", u.username || "", u.password || "", u.fullName || "", u.role || "student", u.school || "", u.gradeClass || "", u.email || "", u.createdAt || new Date().toISOString()]);
+      output.setContent(JSON.stringify({ status: "success" }));
+      return output;
+    }
+
+    if (action === "uploadToDrive" || action === "uploadFile") {
+      var folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+      var fileName = data.fileName || ("TacPham_" + Date.now());
+      var mimeType = data.mimeType || "image/jpeg";
+      var base64Data = (data.fileBase64 || "").replace(/^data:.*,/, "");
+      var fileUrl = "";
+      if (base64Data) {
+        var bytes = Utilities.base64Decode(base64Data);
+        var blob = Utilities.newBlob(bytes, mimeType, fileName);
+        var file = folder.createFile(blob);
+        try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch(e){}
+        fileUrl = file.getUrl();
+      }
+      var v = data.metadata || data.payload || {};
+      sheetVideos.appendRow([v.id || ("vid-" + Date.now()), v.title || fileName, v.authorName || "Học sinh", v.studentGrade || v.grade || "", v.school || "", v.categoryLabel || v.category || "", v.fileType || "image", fileUrl, v.duration || "Hình ảnh", 1, 1, "approved", new Date().toISOString()]);
+      output.setContent(JSON.stringify({ status: "success", fileUrl: fileUrl }));
+      return output;
+    }
+
+    if (action === "addCommitment" || action === "commitment") {
+      var c = data.payload || data;
+      sheetCommitments.appendRow([c.certificateId || c.id || ("LCHD-VOW-" + Date.now()), c.name || "", c.school || "", c.role || "Học sinh", c.pledgedAt || new Date().toISOString()]);
+      output.setContent(JSON.stringify({ status: "success" }));
+      return output;
+    }
+
+    output.setContent(JSON.stringify({ status: "success" }));
+    return output;
+  } catch(err) {
+    output.setContent(JSON.stringify({ status: "error", message: err.toString() }));
+    return output;
+  }
+}
+
+function getOrCreateSheet(ss, name, headers) {
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+    if (headers && headers.length > 0) {
+      sheet.appendRow(headers);
+      sheet.setFrozenRows(1);
+    }
+  }
+  return sheet;
+}
+
+function readSheetReports(sheet) {
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  var list = [];
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (!row[0]) continue;
+    list.push({ id: "rep-" + row[0], ticketCode: String(row[0]), pin: String(row[1] || "1234"), urgency: row[2] || "medium", categoryLabel: row[3] || "Phòng chống tệ nạn học đường", category: "drugs", title: row[4] || "Báo cáo học đường", location: row[5] || "", incidentTime: row[6] || "", description: row[7] || "", hasEvidence: row[8] === "Có" || Boolean(row[9]), evidenceUrl: row[9] || "", status: row[10] || "received", notesFromSchool: row[11] || "", createdAt: row[12] || new Date().toISOString(), updatedAt: row[13] || new Date().toISOString(), messages: [] });
+  }
+  return list;
+}
+
+function readSheetUsers(authSheet, legacySheet) {
+  var data = authSheet.getDataRange().getValues();
+  var list = [];
+  var seen = {};
+  if (data.length > 1) {
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      if (!row[1]) continue;
+      var uname = String(row[1]).trim().toLowerCase();
+      seen[uname] = true;
+      list.push({ id: String(row[0] || ("user-" + i)), username: uname, password: String(row[2] || ""), fullName: String(row[3] || ""), role: row[4] === "admin" ? "admin" : (row[4] === "teacher" || row[4] === "Giáo Viên" ? "teacher" : "student"), school: String(row[5] || ""), gradeClass: String(row[6] || ""), email: String(row[7] || ""), createdAt: row[8] || new Date().toISOString() });
+    }
+  }
+  var legData = legacySheet ? legacySheet.getDataRange().getValues() : [];
+  if (legData.length > 1) {
+    for (var j = 1; j < legData.length; j++) {
+      var lRow = legData[j];
+      if (!lRow[1]) continue;
+      var lUname = String(lRow[1]).trim().toLowerCase();
+      if (!seen[lUname]) {
+        seen[lUname] = true;
+        list.push({ id: String(lRow[0] || ("user-" + j)), username: lUname, password: String(lRow[2] || ""), fullName: String(lRow[3] || ""), role: lRow[4] === "admin" ? "admin" : (lRow[4] === "teacher" || lRow[4] === "Giáo Viên" ? "teacher" : "student"), school: String(lRow[5] || ""), gradeClass: String(lRow[6] || ""), email: String(lRow[7] || ""), createdAt: lRow[8] || new Date().toISOString() });
+      }
+    }
+  }
+  return list;
+}
+
+function readSheetVideos(sheet) {
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  var list = [];
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (!row[0] && !row[1]) continue;
+    list.push({ id: String(row[0] || ("vid-" + i)), title: String(row[1] || ""), authorName: String(row[2] || ""), studentGrade: String(row[3] || ""), school: String(row[4] || ""), categoryLabel: String(row[5] || ""), category: "drugs", fileType: row[6] === "image" || String(row[6]).toLowerCase().indexOf("ảnh") >= 0 ? "image" : "video", driveUrl: String(row[7] || ""), videoUrl: row[6] === "image" ? undefined : String(row[7] || ""), thumbnailUrl: row[6] === "image" ? String(row[7] || "") : undefined, description: "Tác phẩm lưu trữ Google Drive", duration: String(row[8] || "02:30"), likes: Number(row[9]) || 1, views: Number(row[10]) || 1, status: String(row[11] || "approved"), uploadedAt: row[12] || new Date().toISOString() });
+  }
+  return list;
+}
+
+function readSheetCommitments(sheet) {
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  var list = [];
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (!row[0] && !row[1]) continue;
+    list.push({ certificateId: String(row[0]), name: String(row[1]), school: String(row[2] || ""), role: String(row[3] || "Học sinh"), pledgedAt: row[4] || new Date().toISOString() });
+  }
+  return list;
+}`;
+                  navigator.clipboard.writeText(codeSnippet);
+                  alert('Đã sao chép toàn bộ mã Code.gs! Bạn hãy mở Extensions -> Apps Script trên Google Sheets của trường và dán vào.');
+                }}
+                className="px-2.5 py-1 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-lg text-[10px] shadow-xs"
+              >
+                📋 Sao chép mã Code.gs
+              </button>
+            </div>
+            <p className="text-[10px] text-slate-500 leading-snug">
+              Hướng dẫn: Trên Google Sheets trường -&gt; Chọn <strong>Tiện ích mở rộng (Extensions)</strong> -&gt; <strong>Apps Script</strong> -&gt; Dán mã -&gt; Nhấn Lưu -&gt; <strong>Triển khai (Deploy) làm Ứng dụng web (Web app)</strong> với quyền <em>Bất kỳ ai (Anyone)</em>.
+            </p>
           </div>
         </div>
       </div>
