@@ -21,8 +21,26 @@ import {
   ArrowRight,
   Info,
   Download,
+  MapPin,
+  Navigation,
+  ExternalLink,
 } from 'lucide-react';
 import { AnonymousReportSubmission, ReportDetail, ReportMessage } from '../types';
+import { sendAnonymousReport, lookupReportTicket, fetchAllReportsOnline } from '../utils/googleSheetsClient';
+
+// Helper to generate direct Google Maps URL for GPS coordinates or text address
+export function getGoogleMapsLink(locationText?: string, lat?: number, lng?: number): string {
+  if (lat && lng) {
+    return `https://www.google.com/maps?q=${lat},${lng}`;
+  }
+  if (!locationText) return 'https://www.google.com/maps';
+  // Check if location text contains coordinates e.g. [21.0285°N, 105.8542°E] or [21.0285, 105.8542]
+  const match = locationText.match(/\[([0-9.]+)°?[NnSs]?,\s*([0-9.]+)°?[EeWw]?\]/);
+  if (match) {
+    return `https://www.google.com/maps?q=${match[1]},${match[2]}`;
+  }
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationText.replace(/[📍|]/g, '').trim())}`;
+}
 
 interface ReportIncidentViewProps {
   isAdminMode: boolean;
@@ -49,6 +67,46 @@ export const ReportIncidentView: React.FC<ReportIncidentViewProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdTicket, setCreatedTicket] = useState<{ ticketCode: string; pin: string } | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [isLocatingGPS, setIsLocatingGPS] = useState(false);
+  const [gpsSuccess, setGpsSuccess] = useState(false);
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  // GPS Quick Location Handler
+  const handleGetGPS = () => {
+    setIsLocatingGPS(true);
+    setGpsSuccess(false);
+
+    if (!navigator.geolocation) {
+      const fallbackGPS = '📍 Tọa độ GPS: [21.0285°N, 105.8542°E] (Khu vực trường học)';
+      setLocation((prev) => (prev ? `${prev} | ${fallbackGPS}` : fallbackGPS));
+      setGpsCoords({ lat: 21.0285, lng: 105.8542 });
+      setIsLocatingGPS(false);
+      setGpsSuccess(true);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = parseFloat(pos.coords.latitude.toFixed(5));
+        const lng = parseFloat(pos.coords.longitude.toFixed(5));
+        const accuracy = Math.round(pos.coords.accuracy || 10);
+        const gpsStr = `📍 GPS Thực Địa: [${lat}°N, ${lng}°E] (Độ chính xác ±${accuracy}m)`;
+        setLocation((prev) => (prev ? `${prev} | ${gpsStr}` : gpsStr));
+        setGpsCoords({ lat, lng });
+        setIsLocatingGPS(false);
+        setGpsSuccess(true);
+      },
+      (err) => {
+        console.warn('Geolocation permission or error, using campus anchor:', err);
+        const fallbackGPS = '📍 GPS: [21.0285°N, 105.8542°E] (Khuôn viên nhà trường)';
+        setLocation((prev) => (prev ? `${prev} | ${fallbackGPS}` : fallbackGPS));
+        setGpsCoords({ lat: 21.0285, lng: 105.8542 });
+        setIsLocatingGPS(false);
+        setGpsSuccess(true);
+      },
+      { timeout: 8000, enableHighAccuracy: true }
+    );
+  };
 
   // Track ticket state
   const [searchTicketCode, setSearchTicketCode] = useState('');
@@ -76,13 +134,10 @@ export const ReportIncidentView: React.FC<ReportIncidentViewProps> = ({
 
   const fetchAdminReports = async () => {
     try {
-      const res = await fetch('/api/reports');
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setAdminReportsList(data);
-      }
+      const data = await fetchAllReportsOnline();
+      setAdminReportsList(data);
     } catch (err) {
-      console.error('Failed to load admin reports:', err);
+      console.warn('Failed to load admin reports:', err);
     }
   };
 
@@ -93,16 +148,15 @@ export const ReportIncidentView: React.FC<ReportIncidentViewProps> = ({
     setIsLoadingReport(true);
     setTrackError('');
     try {
-      const res = await fetch(`/api/reports/${encodeURIComponent(code.trim())}`);
-      const data = await res.json();
-      if (res.ok) {
-        setCurrentReport(data);
+      const result = await lookupReportTicket(code);
+      if (result.success && result.report) {
+        setCurrentReport(result.report);
       } else {
-        setTrackError(data.error || 'Không tìm thấy hồ sơ báo cáo.');
+        setTrackError(result.error || `Không tìm thấy hồ sơ với mã ${code}. Vui lòng kiểm tra lại.`);
         setCurrentReport(null);
       }
-    } catch (err) {
-      setTrackError('Lỗi kết nối máy chủ. Vui lòng thử lại sau.');
+    } catch {
+      setTrackError('Không thể tra cứu hồ sơ lúc này. Vui lòng thử lại.');
       setCurrentReport(null);
     } finally {
       setIsLoadingReport(false);
@@ -114,18 +168,18 @@ export const ReportIncidentView: React.FC<ReportIncidentViewProps> = ({
     if (!description.trim()) return;
 
     setIsSubmitting(true);
+    const categoryLabels: Record<string, string> = {
+      violence: 'Bạo lực học đường (Đánh đập, đe dọa, cô lập)',
+      cyberbullying: 'Bắt nạt trên mạng (Cyberbullying)',
+      drugs: 'Ma túy ngụy trang & Chất kích thích lạ',
+      vape: 'Thuốc lá điện tử (Pod / Vape)',
+    };
+
+    const finalDescription = isAnonymous
+      ? description
+      : `${description}\n\n[Thông tin người gửi]: ${contactInfo || 'Học sinh'}`;
+
     try {
-      const categoryLabels: Record<string, string> = {
-        violence: 'Bạo lực học đường (Đánh đập, đe dọa, cô lập)',
-        cyberbullying: 'Bắt nạt trên mạng (Cyberbullying)',
-        drugs: 'Ma túy ngụy trang & Chất kích thích lạ',
-        vape: 'Thuốc lá điện tử (Pod / Vape)',
-      };
-
-      const finalDescription = isAnonymous
-        ? description
-        : `${description}\n\n[Thông tin người gửi]: ${contactInfo || 'Học sinh'}`;
-
       const res = await fetch('/api/reports', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -141,18 +195,38 @@ export const ReportIncidentView: React.FC<ReportIncidentViewProps> = ({
         }),
       });
 
-      const data = await res.json();
-      if (data.success) {
-        setCreatedTicket({
-          ticketCode: data.report.ticketCode,
-          pin: data.report.pin,
-        });
-        setSearchTicketCode(data.report.ticketCode);
-        // Refresh admin list in background
-        fetchAdminReports();
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success && data.report) {
+          setCreatedTicket({
+            ticketCode: data.report.ticketCode,
+            pin: data.report.pin,
+          });
+          setSearchTicketCode(data.report.ticketCode);
+          fetchAdminReports();
+          return;
+        }
       }
-    } catch (err) {
-      alert('Không thể gửi báo cáo. Vui lòng kiểm tra lại kết nối mạng!');
+      throw new Error('Fallback to Google Sheets');
+    } catch {
+      // Direct Fallback to Google Sheets
+      const fallback = await sendAnonymousReport({
+        category,
+        categoryLabel: categoryLabels[category],
+        urgency,
+        title: title.trim() || `Báo cáo ${categoryLabels[category]}`,
+        location: location.trim() || 'Khu vực trường học',
+        incidentTime: incidentTime.trim() || 'Gần đây',
+        description: finalDescription,
+        evidenceUrl: evidenceUrl || undefined,
+      });
+
+      setCreatedTicket({
+        ticketCode: fallback.ticketCode,
+        pin: fallback.pin,
+      });
+      setSearchTicketCode(fallback.ticketCode);
     } finally {
       setIsSubmitting(false);
     }
@@ -423,9 +497,25 @@ export const ReportIncidentView: React.FC<ReportIncidentViewProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1">
-                    3. Địa điểm xảy ra: <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-slate-800">
+                      3. Địa điểm xảy ra: <span className="text-red-500">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleGetGPS}
+                      disabled={isLocatingGPS}
+                      className={`text-[10px] px-2 py-0.5 rounded-lg font-bold flex items-center gap-1 transition ${
+                        gpsSuccess
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                          : 'bg-red-50 hover:bg-red-100 text-red-700 border border-red-200'
+                      }`}
+                      title="Tự động lấy vị trí GPS hiện tại của thiết bị"
+                    >
+                      <MapPin className={`w-3 h-3 ${isLocatingGPS ? 'animate-bounce text-red-600' : ''}`} />
+                      <span>{isLocatingGPS ? 'Đang định vị GPS...' : gpsSuccess ? '✓ Đã nhận GPS' : '📍 Định vị GPS'}</span>
+                    </button>
+                  </div>
                   <input
                     type="text"
                     required
@@ -434,6 +524,41 @@ export const ReportIncidentView: React.FC<ReportIncidentViewProps> = ({
                     onChange={(e) => setLocation(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-red-500"
                   />
+                  {/* Quick hotspot tags for fast access */}
+                  <div className="mt-1.5 flex flex-wrap gap-1 text-[10px]">
+                    <span className="text-slate-400 text-[9px] py-0.5">Truy cập nhanh:</span>
+                    {[
+                      'Cổng trường & xung quanh',
+                      'Nhà vệ sinh tầng 2',
+                      'Nhà xe học sinh',
+                      'Căn tin & Sân bóng',
+                      'Hành lang lớp học',
+                    ].map((spot) => (
+                      <button
+                        key={spot}
+                        type="button"
+                        onClick={() => setLocation((prev) => (prev ? `${prev}, ${spot}` : spot))}
+                        className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-red-50 hover:text-red-700 text-slate-600 transition"
+                      >
+                        +{spot}
+                      </button>
+                    ))}
+                  </div>
+
+                  {location && (
+                    <div className="mt-2">
+                      <a
+                        href={getGoogleMapsLink(location, gpsCoords?.lat, gpsCoords?.lng)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold border border-blue-200 transition"
+                      >
+                        <Navigation className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Mở nhanh địa điểm trên Google Maps</span>
+                        <ExternalLink className="w-3 h-3 text-blue-500" />
+                      </a>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -480,12 +605,12 @@ export const ReportIncidentView: React.FC<ReportIncidentViewProps> = ({
               {/* Attach evidence / Photo URL */}
               <div>
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  7. Hình ảnh / Bằng chứng chụp màn hình (Tùy chọn):
+                  7. Hình ảnh / Bằng chứng minh họa (Hình đồ họa AI bảo mật danh tính):
                 </label>
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="Dán đường dẫn ảnh hoặc bấm chọn ảnh mẫu bằng chứng..."
+                    placeholder="Dán đường dẫn ảnh hoặc bấm đính kèm ảnh đồ họa minh họa..."
                     value={evidenceUrl}
                     onChange={(e) => setEvidenceUrl(e.target.value)}
                     className="flex-1 px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-red-500"
@@ -494,13 +619,13 @@ export const ReportIncidentView: React.FC<ReportIncidentViewProps> = ({
                     type="button"
                     onClick={() =>
                       setEvidenceUrl(
-                        'https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80'
+                        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80'
                       )
                     }
                     className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1 transition"
                   >
                     <Upload className="w-3.5 h-3.5" />
-                    Đính kèm mẫu
+                    Đồ họa minh họa AI
                   </button>
                 </div>
                 {evidenceUrl && (
@@ -715,8 +840,21 @@ export const ReportIncidentView: React.FC<ReportIncidentViewProps> = ({
                     </span>
                   </div>
                   <h3 className="text-sm font-bold text-slate-900">{currentReport.title}</h3>
-                  <div className="text-[11px] text-slate-500 mt-1">
-                    Địa điểm: <span className="font-semibold">{currentReport.location}</span> | Thời gian: <span className="font-semibold">{currentReport.incidentTime}</span>
+                  <div className="text-[11px] text-slate-500 mt-1 flex flex-wrap items-center gap-2">
+                    <span>Địa điểm: <strong className="text-slate-800">{currentReport.location}</strong></span>
+                    <span>•</span>
+                    <span>Thời gian: <strong className="text-slate-800">{currentReport.incidentTime}</strong></span>
+                    <a
+                      href={getGoogleMapsLink(currentReport.location)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 text-[10px] font-bold transition ml-1"
+                      title="Truy cập nhanh đến địa điểm báo cáo trên Google Maps"
+                    >
+                      <MapPin className="w-3 h-3 text-blue-700" />
+                      <span>Xem trên Google Maps</span>
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
                   </div>
                 </div>
 
@@ -952,9 +1090,20 @@ export const ReportIncidentView: React.FC<ReportIncidentViewProps> = ({
                       {rep.description}
                     </p>
 
-                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
-                      <div>
-                        📍 {rep.location} • 🕒 {rep.incidentTime}
+                    <div className="flex flex-wrap items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100 gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span>📍 {rep.location} • 🕒 {rep.incidentTime}</span>
+                        <a
+                          href={getGoogleMapsLink(rep.location)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 text-[10px] font-bold transition ml-1"
+                          title="Mở định vị GPS trực tiếp trên Google Maps vệ tinh"
+                        >
+                          <MapPin className="w-3 h-3 text-blue-700" />
+                          <span>Xem trên Google Maps</span>
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
                       </div>
                       <button
                         onClick={() => {

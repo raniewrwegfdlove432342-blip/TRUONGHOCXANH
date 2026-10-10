@@ -358,28 +358,52 @@ function readSheetReports(sheet) {
   return list;
 }
 
+// Helper: Tìm vị trí cột dựa trên tiêu đề linh hoạt
+function findColIdx(headers, keywords, fallback) {
+  if (!headers || headers.length === 0) return fallback;
+  for (var i = 0; i < headers.length; i++) {
+    var h = String(headers[i] || "").toLowerCase();
+    for (var k = 0; k < keywords.length; k++) {
+      if (h.indexOf(keywords[k].toLowerCase()) >= 0) return i;
+    }
+  }
+  return fallback;
+}
+
 // Đọc tài khoản người dùng từ cả 2 sheet và gộp lại (Lấy đầy đủ Mật khẩu để xác thực từ máy khác)
 function readCombinedUsers(authSheet, legacySheet) {
   var userMap = {};
   var userList = [];
 
-  // Đọc từ TrangTinh_TaiKhoan_DangNhap trước (có cột Mật Khẩu ở vị trí 2)
+  // 1. Đọc từ TrangTinh_TaiKhoan_DangNhap
   var authData = authSheet.getDataRange().getValues();
   if (authData.length > 1) {
+    var h0 = authData[0];
+    var uIdx = findColIdx(h0, ["tên đăng nhập", "username", "tài khoản"], 1);
+    var pIdx = findColIdx(h0, ["mật khẩu", "password", "pass"], -1);
+    var nIdx = findColIdx(h0, ["họ và tên", "họ tên", "tên"], 3);
+    var rIdx = findColIdx(h0, ["vai trò", "role", "chức vụ"], 4);
+    var sIdx = findColIdx(h0, ["trường", "school"], 5);
+    var cIdx = findColIdx(h0, ["lớp", "khối", "chuyên môn"], 6);
+    var eIdx = findColIdx(h0, ["email", "sđt", "điện thoại"], 7);
+
     for (var i = 1; i < authData.length; i++) {
       var row = authData[i];
-      if (!row[1]) continue;
-      var uname = String(row[1]).trim().toLowerCase();
-      var roleStr = String(row[4] || "student").toLowerCase();
+      if (!row[uIdx]) continue;
+      var uname = String(row[uIdx]).trim().toLowerCase();
+      var roleStr = String(row[rIdx] || "student").toLowerCase();
+      var passVal = pIdx >= 0 ? String(row[pIdx] || "").trim() : "";
+      var nameVal = String(row[nIdx] || uname).trim();
+
       var userObj = {
         id: String(row[0] || ("user-" + i)),
         username: uname,
-        password: String(row[2] || ""),
-        fullName: String(row[3] || uname),
+        password: passVal,
+        fullName: nameVal,
         role: roleStr.indexOf("admin") >= 0 ? "admin" : (roleStr.indexOf("viên") >= 0 || roleStr.indexOf("teacher") >= 0 ? "teacher" : "student"),
-        school: String(row[5] || ""),
-        gradeClass: String(row[6] || ""),
-        email: String(row[7] || ""),
+        school: String(row[sIdx] || ""),
+        gradeClass: String(row[cIdx] || ""),
+        email: String(row[eIdx] || ""),
         createdAt: row[8] || new Date().toISOString()
       };
       userMap[uname] = userObj;
@@ -387,26 +411,34 @@ function readCombinedUsers(authSheet, legacySheet) {
     }
   }
 
-  // Đọc thêm từ TrangTinh_TaiKhoan_GV_HS (nếu có tài khoản chưa xuất hiện ở sheet trên)
+  // 2. Đọc thêm từ TrangTinh_TaiKhoan_GV_HS (nếu có tài khoản chưa xuất hiện ở sheet trên)
   var legacyData = legacySheet.getDataRange().getValues();
   if (legacyData.length > 1) {
-    var hasPassCol = legacyData[0] && String(legacyData[0][2]).toLowerCase().indexOf("mật khẩu") >= 0;
+    var lh0 = legacyData[0];
+    var luIdx = findColIdx(lh0, ["tên đăng nhập", "username"], 1);
+    var lpIdx = findColIdx(lh0, ["mật khẩu", "password"], -1);
+    var lnIdx = findColIdx(lh0, ["họ và tên", "họ tên"], 2);
+    var lrIdx = findColIdx(lh0, ["vai trò", "role"], 3);
+    var lsIdx = findColIdx(lh0, ["trường", "school"], 4);
+    var lcIdx = findColIdx(lh0, ["lớp", "khối"], 5);
+    var leIdx = findColIdx(lh0, ["email"], 6);
+
     for (var j = 1; j < legacyData.length; j++) {
       var lRow = legacyData[j];
-      if (!lRow[1]) continue;
-      var lUname = String(lRow[1]).trim().toLowerCase();
+      if (!lRow[luIdx]) continue;
+      var lUname = String(lRow[luIdx]).trim().toLowerCase();
       if (!userMap[lUname]) {
-        var lRole = String(lRow[hasPassCol ? 4 : 3] || "student").toLowerCase();
+        var lRoleStr = String(lRow[lrIdx] || "student").toLowerCase();
         var lObj = {
           id: String(lRow[0] || ("user-leg-" + j)),
           username: lUname,
-          password: hasPassCol ? String(lRow[2] || "") : "",
-          fullName: String(lRow[hasPassCol ? 3 : 2] || lUname),
-          role: lRole.indexOf("admin") >= 0 ? "admin" : (lRole.indexOf("viên") >= 0 || lRole.indexOf("teacher") >= 0 ? "teacher" : "student"),
-          school: String(lRow[hasPassCol ? 5 : 4] || ""),
-          gradeClass: String(lRow[hasPassCol ? 6 : 5] || ""),
-          email: String(lRow[hasPassCol ? 7 : 6] || ""),
-          createdAt: lRow[hasPassCol ? 8 : 7] || new Date().toISOString()
+          password: lpIdx >= 0 ? String(lRow[lpIdx] || "").trim() : "",
+          fullName: String(lRow[lnIdx] || lUname).trim(),
+          role: lRoleStr.indexOf("admin") >= 0 ? "admin" : (lRoleStr.indexOf("viên") >= 0 || lRoleStr.indexOf("teacher") >= 0 ? "teacher" : "student"),
+          school: String(lRow[lsIdx] || ""),
+          gradeClass: String(lRow[lcIdx] || ""),
+          email: String(lRow[leIdx] || ""),
+          createdAt: lRow[7] || new Date().toISOString()
         };
         userMap[lUname] = lObj;
         userList.push(lObj);
@@ -414,7 +446,7 @@ function readCombinedUsers(authSheet, legacySheet) {
     }
   }
 
-  // Đảm bảo luôn có ít nhất tài khoản admin nếu danh sách rỗng
+  // Luôn đảm bảo có tài khoản Quản trị viên (admin)
   if (userList.length === 0 || !userMap["admin"]) {
     userList.unshift({
       id: "user-admin",

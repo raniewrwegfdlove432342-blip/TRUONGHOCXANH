@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, User, Lock, Sparkles, CheckCircle2, AlertCircle, FileSpreadsheet, GraduationCap, School } from 'lucide-react';
 import { UserAccount } from '../types';
+import { authenticateUser, registerNewUser } from '../utils/googleSheetsClient';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -39,48 +40,40 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
             ? departmentOrTitle.trim() || 'Giáo viên bộ môn'
             : gradeClass.trim() || 'Học sinh toàn trường';
 
-        const res = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: username.trim(),
-            password: password.trim(),
-            fullName: fullName.trim(),
-            role: payloadRole,
-            school: school.trim() || 'Trường THCS / THPT Thân Yêu',
-            gradeClass: payloadGradeClass,
-            email: email.trim(),
-            studentCode: payloadRole === 'student' ? studentCode.trim() : undefined,
-          }),
+        const result = await registerNewUser({
+          username,
+          password,
+          fullName,
+          role: payloadRole,
+          school: school.trim() || 'Trường THCS / THPT Thân Yêu',
+          gradeClass: payloadGradeClass,
+          email: email.trim(),
+          studentCode: payloadRole === 'student' ? studentCode.trim() : undefined,
         });
-        const data = await res.json();
-        if (res.ok) {
+
+        if (result.success && result.user) {
           setSuccessMsg(
             `Đăng ký tài khoản ${payloadRole === 'teacher' ? 'Thầy Cô (GV)' : 'Học Sinh (HS)'} thành công! Đang đăng nhập...`
           );
           setTimeout(() => {
-            onLoginSuccess(data.user);
+            onLoginSuccess(result.user!);
             onClose();
-          }, 900);
+          }, 800);
         } else {
-          setErrorMsg(data.error || 'Đăng ký thất bại. Vui lòng thử lại.');
+          setErrorMsg(result.error || 'Đăng ký không thành công. Vui lòng thử lại.');
         }
       } else {
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
-        });
-        const data = await res.json();
-        if (res.ok) {
-          onLoginSuccess(data.user);
+        const result = await authenticateUser(username, password);
+        if (result.success && result.user) {
+          onLoginSuccess(result.user);
           onClose();
         } else {
-          setErrorMsg(data.error || 'Tên đăng nhập hoặc mật khẩu không chính xác.');
+          setErrorMsg(result.error || 'Tên đăng nhập hoặc mật khẩu không chính xác.');
         }
       }
-    } catch (err) {
-      setErrorMsg('Lỗi kết nối máy chủ. Vui lòng thử lại sau.');
+    } catch {
+      // In case of unexpected client issue
+      setErrorMsg('Vui lòng kiểm tra lại thông tin đăng nhập.');
     } finally {
       setLoading(false);
     }

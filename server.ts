@@ -27,6 +27,17 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Enable CORS for all routes (ensures seamless operation across deployed domains and devices)
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Initialize Gemini SDK on server-side
 const geminiApiKey = process.env.GEMINI_API_KEY;
 let ai: GoogleGenAI | null = null;
@@ -206,11 +217,15 @@ async function fetchFromGoogleSheets() {
     // Google Apps Script redirects with 302 on POST; GET with query params & redirect follow is 100% reliable
     const separator = googleSheetsConfig.webhookUrl.includes('?') ? '&' : '?';
     const getUrl = `${googleSheetsConfig.webhookUrl}${separator}action=getAllData&_t=${Date.now()}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
     const response = await fetch(getUrl, {
       method: 'GET',
       headers: { Accept: 'application/json' },
       redirect: 'follow',
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
     const text = await response.text();
     let data;
     try {
@@ -1233,7 +1248,7 @@ async function startServer() {
   const distPath = path.join(__dirname, 'dist');
   const distIndexExists = fs.existsSync(path.join(distPath, 'index.html'));
 
-  if (process.env.NODE_ENV === 'production' && distIndexExists) {
+  if (distIndexExists || process.env.NODE_ENV === 'production') {
     console.log('📦 Serving production static bundle from /dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {

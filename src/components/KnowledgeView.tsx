@@ -213,29 +213,185 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
         </section>
       )}
 
-      {/* SECTION 2: BÓC TRẦN LỜI ĐỒN VỀ THUỐC LÁ ĐIỆN TỬ (POD / VAPE) */}
+      {/* SECTION 2: BÓC TRẦN LỜI ĐỒN & CẨM NANG TOÀN DIỆN VỀ THUỐC LÁ ĐIỆN TỬ (POD / VAPE) */}
       {(activeCategory === 'all' || activeCategory === 'vape' || activeCategory === 'thuoc-la') && (
-        <section className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-3">
-          <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-blue-600" />
-            <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">
-              BÓC TRẦN NGỘ NHẬN VỀ THUỐC LÁ ĐIỆN TỬ (POD / VAPE)
-            </h3>
+        <section className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-5">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-rose-600" />
+              <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">
+                CẨM NANG TOÀN DIỆN: SỰ THẬT Y KHOA VỀ THUỐC LÁ ĐIỆN TỬ (POD / VAPE)
+              </h3>
+            </div>
+            <span className="text-[10px] px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 font-black">
+              Cảnh Báo Bộ Y Tế & BV Bạch Mai
+            </span>
           </div>
 
-          <div className="space-y-3">
+          {/* 4 Chuyên đề y khoa chuyên sâu */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <div className="p-4 bg-linear-to-br from-rose-50 to-orange-50 border border-rose-200 rounded-2xl space-y-2">
+              <div className="flex items-center gap-2 text-rose-900 font-black text-sm">
+                <span>🫁 1. Hội chứng tổn thương phổi cấp EVALI & Phổi bỏng ngô</span>
+              </div>
+              <p className="text-slate-700 leading-relaxed">
+                Hóa chất tạo mùi béo thơm như <strong>Diacetyl</strong> và dung môi <strong>Vitamin E Acetate</strong> khi bị nung nóng tạo ra các giọt sol khí làm đông đặc phế nang, phá hủy tiểu phế quản gây bệnh <em>"Phổi bỏng ngô" (Popcorn Lung)</em>. Rất nhiều học sinh 14-16 tuổi đã bị suy hô hấp cấp, tràn khí màng phổi phải đặt ống nội khí quản và chạy ECMO.
+              </p>
+              <div className="text-[11px] font-bold text-rose-800 bg-white/80 p-2 rounded-xl border border-rose-200">
+                ⚠️ Dấu hiệu: Khó thở tăng dần, ho ra máu, sốt nhẹ, đau tức ngực sau khi sử dụng Pod.
+              </div>
+            </div>
+
+            <div className="p-4 bg-linear-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl space-y-2">
+              <div className="flex items-center gap-2 text-purple-900 font-black text-sm">
+                <span>🧠 2. Muối Nicotine liều cao & Teo vỏ não tuổi dậy thì</span>
+              </div>
+              <p className="text-slate-700 leading-relaxed">
+                Pod thế hệ mới sử dụng <strong>Muối Nicotine (Nicotine Salt)</strong> nồng độ 30mg - 50mg/ml (tương đương <strong>2-3 bao thuốc lá truyền thống</strong> trong 1 thiết bị nhỏ). Nicotine ngấm vào máu chỉ sau <strong>7 giây</strong>, ức chế thụ thể Dopamine tự nhiên, làm teo thùy trán - vùng não điều khiển trí nhớ và cảm xúc.
+              </p>
+              <div className="text-[11px] font-bold text-purple-800 bg-white/80 p-2 rounded-xl border border-purple-200">
+                ⚠️ Hậu quả: Suy giảm 35-40% khả năng tập trung, rối loạn lo âu, mất ngủ và trầm cảm.
+              </div>
+            </div>
+
+            <div className="p-4 bg-linear-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl space-y-2">
+              <div className="flex items-center gap-2 text-amber-950 font-black text-sm">
+                <span>⚗️ 3. Bụi kim loại nặng & Chất gây ung thư nhóm 1</span>
+              </div>
+              <p className="text-slate-700 leading-relaxed">
+                Cuộn dây đốt kim loại (Coil) của Pod khi đốt ở 200°C-300°C làm thôi nhiễm các hạt bụi nano <strong>Chì (Pb), Niken (Ni), Crom (Cr), Thiếc (Sn)</strong> vào khí quản. Đồng thời sinh ra các hợp chất hữu cơ độc hại như <strong>Formaldehyde, Acrolein, Acetaldehyde</strong> gây xơ hóa gan và ung thư vòm họng.
+              </p>
+              <div className="text-[11px] font-bold text-amber-900 bg-white/80 p-2 rounded-xl border border-amber-200">
+                ⚠️ Sự thật: Không có loại Pod nào là "chỉ có hơi nước tinh khiết" như quảng cáo!
+              </div>
+            </div>
+
+            <div className="p-4 bg-linear-to-br from-red-50 to-rose-50 border border-red-300 rounded-2xl space-y-2">
+              <div className="flex items-center gap-2 text-red-950 font-black text-sm">
+                <span>🚨 4. Cạm bẫy "Pod Chill" tẩm ướp Ma túy tổng hợp</span>
+              </div>
+              <p className="text-slate-700 leading-relaxed">
+                Thủ đoạn nguy hiểm nhất hiện nay: Tinh dầu Pod trôi nổi được kẻ xấu bơm thêm <strong>Cần sa tổng hợp (K2/Spice, ADB-BUTINACA)</strong>. Khi hút vào gây ngộ độc thần kinh cấp: co giật, sùi bọt mép, ảo giác bạo lực, mất kiểm soát hành vi và có thể ngừng tim đột ngột.
+              </p>
+              <div className="text-[11px] font-bold text-red-900 bg-white/80 p-2 rounded-xl border border-red-200">
+                ⚠️ Tuyệt đối: KHÔNG hút thử dù chỉ 1 hơi từ bất kỳ pod nào của bạn bè hoặc người lạ đưa!
+              </div>
+            </div>
+          </div>
+
+          {/* Bảng phân loại 4 dạng Pod ngụy trang tinh vi */}
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+            <h4 className="text-xs font-black text-slate-800 uppercase flex items-center gap-1.5">
+              <span>🔍 NHẬN BIẾT 4 HÌNH THÁI POD NGỤY TRANG DỄ BỎ QUÊN TRONG HỌC ĐƯỜNG:</span>
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
+              <div className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-2xs">
+                <div className="font-bold text-slate-900 mb-1">🖊️ Dạng Đồ Dùng Học Tập</div>
+                <div className="text-[11px] text-slate-600">Ngụy trang hình cây bút dạ quang, bút xóa, con dấu, thỏi son, cục tẩy để giấu trong hộp bút.</div>
+              </div>
+              <div className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-2xs">
+                <div className="font-bold text-slate-900 mb-1">🧸 Dạng Đồ Chơi / Anime</div>
+                <div className="text-[11px] text-slate-600">Hình hộp sữa đồ chơi, phi hành gia, gấu Bearbrick, móc treo chìa khóa phát sáng bắt mắt.</div>
+              </div>
+              <div className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-2xs">
+                <div className="font-bold text-slate-900 mb-1">🔌 Dạng Thiết Bị Công Nghệ</div>
+                <div className="text-[11px] text-slate-600">Trông giống hệt ổ cứng USB máy tính, sạc dự phòng mini, đồng hồ thông minh hoặc tai nghe.</div>
+              </div>
+              <div className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-2xs">
+                <div className="font-bold text-slate-900 mb-1">🧪 Tinh Dầu Trôi Nổi</div>
+                <div className="text-[11px] text-slate-600">Lọ tinh dầu tự pha chế không nhãn mác, bán lén lút qua nhóm kín mạng xã hội, nguy cơ trộn độc chất 100%.</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bảng đối chiếu Lời đồn vs Sự thật */}
+          <div className="space-y-2.5">
+            <h4 className="text-xs font-bold text-slate-700">BÓC TRẦN CÁC NGỘ NHẬN THƯỜNG GẶP CỦA HỌC SINH:</h4>
             {vapeMyths.map((item, idx) => (
-              <div key={idx} className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 text-xs">
+              <div key={idx} className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5 text-xs">
                 <div className="flex items-start gap-2 text-rose-700 font-bold">
                   <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>Lời đồn sai lệch: {item.myth}</span>
                 </div>
                 <div className="flex items-start gap-2 text-emerald-800 font-medium pl-6">
                   <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
-                  <span>Sự thật khoa học: {item.truth}</span>
+                  <span>Sự thật y khoa: {item.truth}</span>
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Quy định pháp lý & Kỷ luật học đường */}
+          <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-2xl text-xs space-y-1.5 text-emerald-950">
+            <div className="font-black flex items-center gap-1.5 text-emerald-900">
+              <Shield className="w-4 h-4 text-emerald-700" />
+              <span>⚖️ QUY ĐỊNH PHÁP LUẬT & KỶ LUẬT HỌC ĐƯỜNG HIỆN HÀNH (BỘ GD&ĐT):</span>
+            </div>
+            <p className="text-[11px] text-emerald-900/90 leading-relaxed">
+              - <strong>Nghiêm cấm 100%</strong> hành vi sử dụng, tàng trữ, buôn bán hoặc lôi kéo người khác hút thuốc lá điện tử trong trường học và khu vực xung quanh.<br />
+              - Học sinh vi phạm sẽ bị <strong>xếp loại rèn luyện Chưa Đạt</strong>, thông báo về gia đình và xử lý kỷ luật theo nội quy nhà trường.<br />
+              - Hành vi buôn bán thuốc lá điện tử cho người dưới 18 tuổi hoặc tẩm ma túy sẽ bị <strong>xử lý hình sự nghiêm minh</strong> theo Bộ luật Hình sự.
+            </p>
+          </div>
+
+          {/* Sơ cứu khẩn cấp ngộ độc Pod Chill */}
+          <div className="p-4 bg-linear-to-r from-red-500/10 via-rose-500/10 to-orange-500/10 border-2 border-red-400 rounded-2xl space-y-2.5">
+            <div className="flex items-center gap-2 text-red-950 font-black text-sm">
+              <AlertTriangle className="w-4 h-4 text-red-600" />
+              <span>🚨 5 BƯỚC CẤP CỨU KHẨN CẤP KHI THẤY BẠN BÈ BỊ NGỘ ĐỘC POD CHILL / HÔN MÊ:</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 text-xs">
+              <div className="p-2.5 bg-white rounded-xl border border-red-200 shadow-2xs">
+                <div className="font-black text-red-800 mb-1">Bước 1: Nơi Thoáng</div>
+                <div className="text-[11px] text-slate-700">Đưa nạn nhân ngay ra khu vực thoáng khí, giải tán đám đông vây quanh.</div>
+              </div>
+              <div className="p-2.5 bg-white rounded-xl border border-red-200 shadow-2xs">
+                <div className="font-black text-red-800 mb-1">Bước 2: Nằm Nghiêng</div>
+                <div className="text-[11px] text-slate-700">Đặt nằm nghiêng an toàn (tư thế hồi sức) để tránh sặc dịch nôn vào phế quản.</div>
+              </div>
+              <div className="p-2.5 bg-white rounded-xl border border-red-200 shadow-2xs">
+                <div className="font-black text-red-800 mb-1">Bước 3: Nới Cổ Áo</div>
+                <div className="text-[11px] text-slate-700">Nới lỏng cúc áo, khăn quàng, thắt lưng để lồng ngực thở tự do.</div>
+              </div>
+              <div className="p-2.5 bg-white rounded-xl border border-red-200 shadow-2xs">
+                <div className="font-black text-red-800 mb-1">Bước 4: Gọi Cấp Cứu</div>
+                <div className="text-[11px] text-slate-700">Hô hoán thầy cô y tế trường hoặc gọi ngay <strong>115</strong> đưa tới bệnh viện.</div>
+              </div>
+              <div className="p-2.5 bg-white rounded-xl border border-red-200 shadow-2xs">
+                <div className="font-black text-red-800 mb-1">Bước 5: Giữ Vỏ Pod</div>
+                <div className="text-[11px] text-slate-700">Thu giữ thiết bị Pod hoặc bao bì giao bác sĩ xét nghiệm tìm độc chất cấp cứu.</div>
+              </div>
+            </div>
+          </div>
+
+          {/* 10 Câu từ chối bản lĩnh Lớp 9 */}
+          <div className="p-4 bg-sky-50 border border-sky-300 rounded-2xl space-y-2.5 text-xs">
+            <div className="flex items-center gap-2 text-sky-950 font-black text-sm">
+              <Shield className="w-4 h-4 text-sky-700" />
+              <span>🎯 10 CÂU THẦN CHÚ TỪ CHỐI BẬC THẦY DÀNH CHO HỌC SINH LỚP 9:</span>
+            </div>
+            <p className="text-slate-600 text-[11px]">
+              Khi bị bạn bè chèo kéo, hãy áp dụng ngay Tứ Bộ Khẩu Quyết kết hợp 1 trong 10 câu đối đáp cực ngầu:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+              {[
+                '1. "Phổi tớ để chạy marathon và đá bóng, không phải lò thiêu khói độc!"',
+                '2. "Tớ bị dị ứng đường hô hấp cấp, một hơi là lên xe cấp cứu đấy!"',
+                '3. "Mẹ tớ xét nghiệm y tế hàng tuần, tớ không muốn đánh đổi tương lai!"',
+                '4. "Tớ thích mùi trà sữa thật hơn là hóa chất nung nóng nhân tạo."',
+                '5. "Hút thứ này vàng răng và già trước tuổi, tớ giữ nụ cười sáng."',
+                '6. "Cậu thử thì cậu tự chịu trách nhiệm, đừng kéo tớ vào rắc rối!"',
+                '7. "Thầy cô giám thị đang tuần tra kìa, cất đi kẻo bị đình chỉ học!"',
+                '8. "Tập trung giải nốt bài Toán này đi, mai kiểm tra học kỳ rồi!"',
+                '9. "Tớ chuẩn bị thi thể thao quận, giữ phổi sạch là ưu tiên số 1 của tớ!"',
+                '10. "Tớ tôn trọng cậu nhưng tớ nói KHÔNG dứt khoát với thứ này!"',
+              ].map((mantra, i) => (
+                <div key={i} className="p-2 bg-white rounded-xl border border-sky-100 font-bold text-slate-800 flex items-center gap-1.5 shadow-2xs">
+                  <span className="text-sky-600 font-extrabold shrink-0">💬</span>
+                  <span>{mantra}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       )}

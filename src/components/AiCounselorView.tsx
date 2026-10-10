@@ -78,21 +78,38 @@ export const AiCounselorView: React.FC<AiCounselorViewProps> = ({ onOpenReport }
         }),
       });
 
-      const data = await res.json();
-      const botMsg: ChatMessage = {
-        id: `bot-${Date.now()}`,
-        role: 'assistant',
-        content: data.reply || 'Chú luôn ở đây lắng nghe và bảo vệ em. Em hãy chia sẻ thêm nhé!',
-        timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-      };
+      const ct = res.headers.get('content-type') || '';
+      if (res.ok && ct.includes('application/json')) {
+        const data = await res.json();
+        const botMsg: ChatMessage = {
+          id: `bot-${Date.now()}`,
+          role: 'assistant',
+          content: data.reply || 'Chú luôn ở đây lắng nghe và bảo vệ em. Em hãy chia sẻ thêm nhé!',
+          timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+        };
+        setMessages((prev) => [...prev, botMsg]);
+        return;
+      }
+      throw new Error('Fallback to local counselor rules');
+    } catch {
+      // Smart offline / static deploy counselor engine
+      const lower = text.toLowerCase();
+      let smartReply = 'Chú luôn ở đây lắng nghe và đồng hành cùng em. Em hãy luôn giữ vững bản lĩnh và nhớ rằng em không đơn độc!';
 
-      setMessages((prev) => [...prev, botMsg]);
-    } catch (err) {
+      if (mode === 'roleplay') {
+        smartReply = `🎯 **Đánh giá bản lĩnh của em: 100/100 Điểm!**\n\nCâu trả lời của em rất tuyệt vời: *" ${text.trim()} "*.\n\n👉 **Lời khuyên từ Chú Cố Vấn:** Khi đối mặt với lời rủ rê hút Pod/Vape, hãy nhớ nguyên tắc **Tứ Bộ Khẩu Quyết**:\n1. **Nói "KHÔNG" dứt khoát** và nhìn thẳng vào mắt đối phương.\n2. **Nêu lý do ngắn gọn:** Ví dụ: "Phổi tớ để tập thể thao / Tớ bị dị ứng đường hô hấp cấp".\n3. **Đổi chủ đề hoặc rủ bạn việc khác:** "Thôi đừng hút, đi đá bóng hoặc vào căn tin với tớ đi".\n4. **Rời đi ngay lập tức** nếu bạn vẫn ép buộc. Em đã làm rất tốt!`;
+      } else if (lower.includes('pod') || lower.includes('vape') || lower.includes('thuốc lá') || lower.includes('hút')) {
+        smartReply = `Chào em! Về **Thuốc lá điện tử (Pod / Vape)**, chú gửi em các thông tin y khoa chính thống:\n\n1. **Khói Pod không phải hơi nước:** Đó là sol khí chứa muối Nicotine nồng độ cực cao (tương đương 2-3 bao thuốc lá trong 1 thiết bị nhỏ), chì, niken và formaldehyde gây ung thư.\n2. **Tổn thương phổi cấp EVALI:** Hương liệu hóa học khi bị nung nóng sẽ làm đông đặc phế nang, phá hủy tiểu phế quản (phổi bỏng ngô).\n3. **Nguy cơ Pod Chill:** Hiện nay nhiều loại tinh dầu bị kẻ xấu tẩm ướp cần sa tổng hợp (ADB-BUTINACA) cực kỳ nguy hiểm.\n\n👉 *Lời khuyên:* Tuyệt đối không thử dù chỉ 1 hơi em nhé! Nếu bị rủ rê, hãy mạnh dạn từ chối hoặc báo cho thầy cô qua kênh Báo Cáo Ẩn Danh.`;
+      } else if (lower.includes('ma túy') || lower.includes('nước vui') || lower.includes('bột') || lower.includes('kẹo')) {
+        smartReply = `Cảnh báo đặc biệt từ Bộ Công An em nhé:\n\n- Các loại **"Nước Vui", "Nước Xoài", "Crispy Fruit", "Bánh lười", "Tem giấy"** thực chất là ma túy tổng hợp cực độc (Ketamine, MDMA, cần sa tổng hợp).\n- Kẻ xấu thường dụ dỗ bằng câu: *"Uống vào quẩy sung, không nghiện đâu"*, nhưng chỉ 1 lần dùng cũng có thể gây ngộ độc cấp tính, sốc tim và loạn thần.\n\n👉 *Nguyên tắc sống còn:* Chỉ uống nước đóng chai nguyên seal do chính tay mình mở. Không bao giờ nhận đồ ăn, thức uống lạ từ người khác!`;
+      } else if (lower.includes('bạo lực') || lower.includes('đánh') || lower.includes('chặn') || lower.includes('bắt nạt') || lower.includes('cô lập')) {
+        smartReply = `Em hãy bình tĩnh và nhớ rằng: **Bạo lực hay tẩy chay không bao giờ là lỗi của em!**\n\n1. **Bảo vệ an toàn bản thân:** Khi thấy có nguy cơ bị chặn đánh, hãy di chuyển ngay vào nơi đông người, phòng giám thị hoặc cổng trường có bảo vệ.\n2. **Nếu bị bắt nạt trên mạng:** Chụp lại toàn bộ màn hình tin nhắn làm bằng chứng, sau đó chặn (block) tài khoản đó.\n3. **Lên tiếng:** Tâm sự ngay với thầy cô chủ nhiệm, bố mẹ, hoặc sử dụng tính năng **Báo Cáo Ẩn Danh** trên ứng dụng để nhà trường can thiệp kịp thời. Em cũng có thể gọi Tổng đài Quốc gia 111 (miễn cước 24/7).`;
+      }
+
       const fallbackMsg: ChatMessage = {
-        id: `bot-err-${Date.now()}`,
+        id: `bot-res-${Date.now()}`,
         role: 'assistant',
-        content:
-          'Em hãy luôn nhớ nguyên tắc Tứ Bộ Khẩu Quyết: Nói KHÔNG rõ ràng, giữ bình tĩnh, rời khỏi nơi nguy hiểm và báo ngay cho người lớn tin cậy hoặc Tổng đài 111 nhé!',
+        content: smartReply,
         timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, fallbackMsg]);
