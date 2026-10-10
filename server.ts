@@ -5,12 +5,21 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import * as XLSX from 'xlsx';
-import { QUIZ_QUESTIONS } from './src/data/mockData';
-
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Safely load quiz questions for Excel export without breaking ESM module resolution
+let QUIZ_QUESTIONS: any[] = [];
+try {
+  const quizPath = path.join(__dirname, 'data', 'quiz-questions.json');
+  if (fs.existsSync(quizPath)) {
+    QUIZ_QUESTIONS = JSON.parse(fs.readFileSync(quizPath, 'utf-8'));
+  }
+} catch {
+  QUIZ_QUESTIONS = [];
+}
 
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
@@ -1221,22 +1230,43 @@ Nhiệm vụ:
 
 // Full-stack Vite handling
 async function startServer() {
-  if (process.env.NODE_ENV !== 'production') {
-    const { createServer: createViteServer } = await import('vite');
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
-    app.use(express.static(path.join(__dirname, 'dist')));
+  const distPath = path.join(__dirname, 'dist');
+  const distIndexExists = fs.existsSync(path.join(distPath, 'index.html'));
+
+  if (process.env.NODE_ENV === 'production' && distIndexExists) {
+    console.log('📦 Serving production static bundle from /dist');
+    app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+      res.sendFile(path.join(distPath, 'index.html'));
     });
+  } else {
+    try {
+      console.log('⚡ Initializing Vite development server middlewares');
+      const { createServer: createViteServer } = await import('vite');
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      app.use(vite.middlewares);
+    } catch (viteErr) {
+      if (distIndexExists) {
+        console.warn('⚠️ Vite middleware initialization failed, falling back to /dist bundle:', viteErr);
+        app.use(express.static(distPath));
+        app.get('*', (req, res) => {
+          res.sendFile(path.join(distPath, 'index.html'));
+        });
+      } else {
+        console.error('❌ Could not start Vite dev server or find /dist bundle:', viteErr);
+      }
+    }
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🌿 Trường Học Xanh Server running on http://localhost:${PORT}`);
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🌿 Trường Học Xanh Server running on http://0.0.0.0:${PORT}`);
+  });
+
+  server.on('error', (err: any) => {
+    console.error('Server error:', err);
   });
 }
 

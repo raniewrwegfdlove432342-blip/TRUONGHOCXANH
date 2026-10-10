@@ -1,0 +1,680 @@
+[
+  {
+    "id": 1,
+    "question": "Thuốc lá điện tử (Pod system / Vape) có an toàn hơn thuốc lá truyền thống hay không?",
+    "category": "vape",
+    "options": [
+      "Hoàn toàn an toàn vì chỉ có hơi nước và tinh dầu trái cây.",
+      "Không an toàn! Vẫn chứa lượng lớn Nicotine gây nghiện, kim loại nặng độc hại và hóa chất gây tổn thương phổi.",
+      "Chỉ độc khi hút trên 10 hơi một ngày.",
+      "An toàn cho học sinh nhưng có hại cho người lớn tuổi."
+    ],
+    "correctIndex": 1,
+    "explanation": "Theo Bệnh viện Bạch Mai, thuốc lá điện tử chứa muối nicotine nồng độ cao, các kim loại nặng như Chì, Niken và hợp chất hữu cơ dễ bay hơi gây bệnh phổi bỏng ngô (EVALI)."
+  },
+  {
+    "id": 2,
+    "question": "\"Nước vui\", \"Nước xoài\", \"Crispy Fruit\" được Bộ Công an cảnh báo thực chất là gì?",
+    "category": "drugs",
+    "options": [
+      "Một loại nước giải khát tăng lực cao cấp nhập khẩu.",
+      "Ma túy tổng hợp ngụy trang dưới dạng bột trà trái cây, gây ảo giác, loạn thần và tử vong.",
+      "Bột sủi thanh nhiệt dành cho học sinh mùa thi.",
+      "Nước ngọt có ga bổ sung vitamin thông thường."
+    ],
+    "correctIndex": 1,
+    "explanation": "\"Nước vui\" là ma túy tổng hợp pha trộn Ketamine, MDMA cực độc. Tuyệt đối không được uống bất kỳ thứ nước hay gói bột lạ nào!",
+    "dangerAlert": "Cảnh báo đỏ từ Bộ Công an!"
+  },
+  {
+    "id": 3,
+    "question": "Khi bị bạn bè cùng lớp đe dọa, cô lập hoặc bắt nạt trên mạng (Cyberbullying), học sinh nên làm gì theo khuyến cáo của Cục An toàn thông tin?",
+    "category": "violence",
+    "options": [
+      "Âm thầm chịu đựng, không dám nói vì sợ bị trả thù nhiều hơn.",
+      "Tìm vũ khí để đánh trả lại đối phương sau giờ tan học.",
+      "Chụp lại tin nhắn làm bằng chứng, chia sẻ ngay với thầy cô/cha mẹ hoặc gửi Báo Cáo Ẩn Danh trên app.",
+      "Lập nick ảo đi bêu xấu lại bạn bè cho bõ tức."
+    ],
+    "correctIndex": 2,
+    "explanation": "Lưu giữ bằng chứng và báo cáo cho người có trách nhiệm (thầy cô, phụ huynh, tổng đài 111) là giải pháp an toàn và hiệu quả nhất theo Cục An toàn thông tin."
+  },
+  {
+    "id": 4,
+    "question": "Tứ Bộ Khẩu Quyết từ chối lời rủ rê chất kích thích gồm những bước nào theo đúng thứ tự?",
+    "category": "drugs",
+    "options": [
+      "1. Đồng ý thử nhẹ -> 2. Xin lỗi -> 3. Bỏ chạy -> 4. Báo công an.",
+      "1. Nói KHÔNG rõ ràng -> 2. Nêu lý do ngắn gọn -> 3. Đổi chủ đề lành mạnh -> 4. Rời đi an toàn.",
+      "1. Quát mắng -> 2. Đánh nhau -> 3. Đập vỡ đồ -> 4. Chạy trốn.",
+      "1. Im lặng -> 2. Cầm hộ -> 3. Giấu vào cặp -> 4. Vứt đi sau."
+    ],
+    "correctIndex": 1,
+    "explanation": "4 bước vàng giúp em từ chối tự tin, lịch sự nhưng vô cùng kiên định, không tạo cơ hội cho kẻ xấu chèo kéo ép buộc."
+  },
+  {
+    "id": 5,
+    "question": "Tổng đài Quốc gia bảo vệ trẻ em có số điện thoại là gì và cước phí ra sao?",
+    "category": "violence",
+    "options": [
+      "Số 111 - Miễn phí hoàn toàn 24/7.",
+      "Số 115 - Cước phí 5.000đ/phút.",
+      "Số 113 - Chỉ gọi được trong giờ hành chính.",
+      "Số 114 - Chỉ dùng cho xe cứu hỏa."
+    ],
+    "correctIndex": 0,
+    "explanation": "Tổng đài 111 là đường dây nóng quốc gia bảo vệ trẻ em khỏi bạo lực, xâm hại, lôi kéo tệ nạn, hoạt động 24/24 và hoàn toàn miễn cước gọi."
+  },
+  {
+    "id": 6,
+    "question": "Hút thuốc lá thụ động (hít phải khói thuốc của người khác hút xung quanh) có tác hại gì?",
+    "category": "tobacco",
+    "options": [
+      "Không ảnh hưởng gì vì người hít không phải là người hút trực tiếp.",
+      "Chỉ gây mùi khó chịu ở quần áo.",
+      "Nguy hại tương đương người hút chủ động: gây ung thư phổi, hen suyễn, viêm phế quản cấp tính.",
+      "Giúp người xung quanh tăng sức đề kháng."
+    ],
+    "correctIndex": 2,
+    "explanation": "Khói thuốc thụ động chứa hơn 7.000 hóa chất độc hại, trong đó có 69 chất gây ung thư, đặc biệt nguy hiểm với đường hô hấp của thanh thiếu niên."
+  },
+  {
+    "id": 7,
+    "question": "Tại sao các đối tượng buôn bán ma túy thường cố tình trộn ma túy vào \"Pod Chill\"?",
+    "category": "drugs",
+    "options": [
+      "Để tinh dầu có mùi thơm hơn và giảm giá thành sản xuất.",
+      "Để học sinh nhanh chóng bị lệ thuộc/nghiện mà không hay biết, từ đó biến học sinh thành người mua thường xuyên.",
+      "Vì pháp luật cho phép làm như vậy.",
+      "Để giúp học sinh thông minh và tập trung học tập hơn."
+    ],
+    "correctIndex": 1,
+    "explanation": "Đây là thủ đoạn vô nhân đạo biến học sinh thành con nghiện lệ thuộc. Khi đã nghiện, học sinh sẽ bị tống tiền hoặc bị ép đi lôi kéo bạn bè."
+  },
+  {
+    "id": 8,
+    "question": "Nếu phát hiện bạn cùng lớp mang Pod hoặc chất lạ đến trường, hành động dũng cảm nhất là gì?",
+    "category": "vape",
+    "options": [
+      "Mượn hút thử một hơi rồi giữ bí mật cho bạn.",
+      "Khoe với cả lớp để mọi người cùng biết.",
+      "Khuyên bạn dừng lại và báo riêng với thầy cô giáo chủ nhiệm hoặc gửi thông tin qua Hộp thư mật ẩn danh.",
+      "Đe dọa bạn để đòi tiền tiêu vặt."
+    ],
+    "correctIndex": 2,
+    "explanation": "Báo cho thầy cô kịp thời chính là đang cứu bạn mình thoát khỏi vòng xoáy nghiện ngập và kỷ luật nặng nề sau này."
+  },
+  {
+    "id": 9,
+    "question": "Bắt nạt học đường bao gồm những hình thức nào sau đây?",
+    "category": "violence",
+    "options": [
+      "Chỉ tính khi có hành vi đánh đập làm chảy máu.",
+      "Bạo lực thể xác, bạo lực ngôn từ (chửi bới, xúc phạm), bạo lực quan hệ (cô lập, tẩy chay) và bạo lực mạng.",
+      "Chỉ là những trò đùa vui vô hại giữa các bạn học sinh.",
+      "Chỉ xảy ra ở các trường THPT."
+    ],
+    "correctIndex": 1,
+    "explanation": "Bạo lực ngôn từ và cô lập tẩy chay gây vết thương tâm lý âm ỉ và dai dẳng không kém gì bạo lực thể xác."
+  },
+  {
+    "id": 10,
+    "question": "Khẩu hiệu cốt lõi của phong trào \"Trường Học Xanh\" là gì?",
+    "category": "drugs",
+    "options": [
+      "Ai mạnh người ấy thắng trong trường học.",
+      "Tâm Sáng – Thân Trong – Trí Kiên: Vững Vàng Trước Cám Dỗ, Dũng Cảm Vì Bạn Bè!",
+      "Hút Pod là biểu hiện của người sành điệu hiện đại.",
+      "Gặp chuyện xấu thì cứ mặc kệ, không phải việc của mình."
+    ],
+    "correctIndex": 1,
+    "explanation": "Đây chính là kim chỉ nam giúp mỗi bạn học sinh trở thành một mầm xanh tự tin, bản lĩnh và có trách nhiệm với cộng đồng!"
+  },
+  {
+    "id": 11,
+    "question": "Ma túy \"Tem giấy\" hay còn gọi là \"Bùa lưỡi\" thực chất chứa chất ma túy nào sau đây?",
+    "category": "drugs",
+    "options": [
+      "Chất LSD - Gây ảo giác cực mạnh, hoang tưởng và mất kiểm soát hành vi.",
+      "Vitamin C cô đặc tẩm giấy màu.",
+      "Chất làm ngọt nhân tạo không độc.",
+      "Tinh dầu bạc hà tự nhiên."
+    ],
+    "correctIndex": 0,
+    "explanation": "LSD trong tem giấy ngấm thẳng qua niêm mạc lưỡi, gây ảo giác dị thường khiến người dùng có thể nhảy lầu hoặc tự làm hại bản thân."
+  },
+  {
+    "id": 12,
+    "question": "Chất Nicotine trong thuốc lá và thuốc lá điện tử ảnh hưởng như thế nào đến não bộ học sinh?",
+    "category": "vape",
+    "options": [
+      "Giúp não bộ phát triển nhanh hơn người bình thường.",
+      "Làm suy giảm trí nhớ, teo khả năng tập trung, gây lo âu, trầm cảm và biến đổi tính cách.",
+      "Không ảnh hưởng gì vì não học sinh đã hoàn thiện.",
+      "Giúp học giỏi các môn tự nhiên hơn."
+    ],
+    "correctIndex": 1,
+    "explanation": "Não bộ người chỉ hoàn thiện vào khoảng 25 tuổi. Nicotine phá vỡ quá trình hình thành các liên kết thần kinh ở tuổi thanh thiếu niên."
+  },
+  {
+    "id": 13,
+    "question": "Theo quy định của pháp luật Việt Nam, hành vi vận chuyển thuê gói hàng chứa ma túy cho người khác (dù được trả tiền tiêu vặt) sẽ bị xử lý ra sao?",
+    "category": "drugs",
+    "options": [
+      "Chỉ bị nhắc nhở nhẹ nhàng vì không phải chủ sở hữu.",
+      "Phải chịu trách nhiệm hình sự về tội vận chuyển trái phép chất ma túy, có thể chịu mức án rất nghiêm khắc.",
+      "Không bị xử lý nếu dưới 18 tuổi.",
+      "Chỉ cần trả lại tiền công là xong."
+    ],
+    "correctIndex": 1,
+    "explanation": "Tội phạm thường lợi dụng học sinh để vận chuyển ma túy. Người vận chuyển vẫn bị truy cứu trách nhiệm hình sự nghiêm khắc theo Bộ luật Hình sự."
+  },
+  {
+    "id": 14,
+    "question": "Bóng cười (chứa khí N2O) lạm dụng thường xuyên có thể gây ra di chứng y khoa nào?",
+    "category": "drugs",
+    "options": [
+      "Giúp phổi khỏe mạnh hơn.",
+      "Tổn thương tủy sống cổ, tê bì mất cảm giác chân tay, liệt vận động và teo cơ vĩnh viễn.",
+      "Làm giọng hát hay hơn.",
+      "Không để lại bất kỳ di chứng nào."
+    ],
+    "correctIndex": 1,
+    "explanation": "Khí N2O ức chế tổng hợp vitamin B12, gây thoái hóa tủy sống bán cấp. Bệnh viện Bạch Mai đã tiếp nhận nhiều thanh thiếu niên bị liệt hoàn toàn do bóng cười."
+  },
+  {
+    "id": 15,
+    "question": "Khi một bạn trong lớp bị người khác lập nhóm chat kín nói xấu, ghép ảnh xúc phạm danh dự, người chứng kiến nên làm gì?",
+    "category": "violence",
+    "options": [
+      "Thả tim, gửi biểu tượng cười cợt và rủ thêm người khác vào xem.",
+      "Không hùa theo, chụp màn hình lại và báo cho giáo viên chủ nhiệm hoặc cán bộ tư vấn tâm lý.",
+      "Nhắn tin chửi lại đối phương bằng lời lẽ bậy bạ.",
+      "Tải ảnh về máy và gửi cho các lớp khác xem cùng."
+    ],
+    "correctIndex": 1,
+    "explanation": "Sự im lặng hoặc hùa theo của người chứng kiến tiếp tay cho bạo lực. Lên tiếng bảo vệ bạn một cách an toàn là phẩm chất của học sinh văn minh."
+  },
+  {
+    "id": 16,
+    "question": "Khói thuốc lá truyền thống chứa khoảng bao nhiêu chất hóa học độc hại?",
+    "category": "tobacco",
+    "options": [
+      "Khoảng 50 chất.",
+      "Khoảng 7.000 chất hóa học, trong đó có ít nhất 69 chất trực tiếp gây ung thư.",
+      "Chỉ có 1 chất duy nhất là Nicotine.",
+      "Khoảng 200 chất thảo mộc vô hại."
+    ],
+    "correctIndex": 1,
+    "explanation": "Khói thuốc chứa hắc ín, CO, benzen, formaldehyde, asen (thạch tín)... phá hủy tim mạch và phế quản của cả người hút và người xung quanh."
+  },
+  {
+    "id": 17,
+    "question": "Hội chứng EVALI là thuật ngữ y khoa dùng để chỉ tổn thương nguy hiểm nào?",
+    "category": "vape",
+    "options": [
+      "Bệnh dị ứng thời tiết mùa đông.",
+      "Tổn thương phổi cấp tính nghiêm trọng do sử dụng thuốc lá điện tử (E-cigarette Associated Lung Injury).",
+      "Bệnh sâu răng ở lứa tuổi học đường.",
+      "Bệnh cận thị học đường."
+    ],
+    "correctIndex": 1,
+    "explanation": "EVALI khiến phổi bị xơ hóa, đông đặc, người bệnh suy hô hấp dữ dội và phải thở máy hoặc can thiệp ECMO để duy trì sự sống."
+  },
+  {
+    "id": 18,
+    "question": "Biểu hiện nào sau đây cho thấy một học sinh đang có nguy cơ là nạn nhân của bạo lực học đường hoặc bị bắt nạt?",
+    "category": "violence",
+    "options": [
+      "Vui vẻ, hào hứng tham gia các hoạt động tập thể của trường.",
+      "Đột ngột thu mình, sợ đi học, quần áo đồ dùng hay bị rách hỏng, kết quả học tập sa sút, cơ thể có vết bầm tím bất thường.",
+      "Ăn ngủ ngon và tăng cân đều đặn.",
+      "Chăm chỉ tập thể dục thể thao mỗi ngày."
+    ],
+    "correctIndex": 1,
+    "explanation": "Sự thay đổi tâm lý tiêu cực và vết tích trên cơ thể/đồ đạc là dấu hiệu báo động đỏ cần sự lắng nghe, giúp đỡ ngay từ gia đình và thầy cô."
+  },
+  {
+    "id": 19,
+    "question": "Hành vi nào sau đây trên không gian mạng là vi phạm Luật An ninh mạng và nội quy trường học?",
+    "category": "violence",
+    "options": [
+      "Đăng bài tuyên truyền về phòng chống ma túy và thuốc lá.",
+      "Lập hội nhóm bêu xấu, công kích cá nhân, xúc phạm nhân phẩm giáo viên hoặc bạn bè.",
+      "Chia sẻ video bài giảng của thầy cô giáo.",
+      "Tìm kiếm tài liệu học tập trên mạng Internet."
+    ],
+    "correctIndex": 1,
+    "explanation": "Xúc phạm danh dự người khác trên mạng xã hội vi phạm nghiêm trọng Luật An ninh mạng và có thể bị xử phạt hành chính hoặc xử lý hình sự."
+  },
+  {
+    "id": 20,
+    "question": "Kim loại nặng nào thường được tìm thấy trong hơi khí dung của thuốc lá điện tử do cuộn dây đốt giải phóng ra?",
+    "category": "vape",
+    "options": [
+      "Vàng nguyên chất và Bạc.",
+      "Chì (Pb), Niken (Ni), Thiếc (Sn) và Thủy ngân.",
+      "Canxi và Magie.",
+      "Sắt hữu cơ có lợi cho máu."
+    ],
+    "correctIndex": 1,
+    "explanation": "Khi cuộn dây kim loại bị nung ở nhiệt độ cao, các hạt kim loại nặng siêu mịn bị cuốn vào phổi, tích tụ trong máu và gây nhiễm độc mãn tính."
+  },
+  {
+    "id": 21,
+    "question": "Khi bị một nhóm học sinh đe dọa \"chặn đường đánh sau giờ tan học\", cách xử lý KHÔN NGOAN NHẤT là gì?",
+    "category": "violence",
+    "options": [
+      "Rủ thêm bạn bè mang hung khí đến đánh nhau phân thắng bại.",
+      "Ở lại trong khuôn viên trường, báo ngay cho thầy cô giám thị, bảo vệ hoặc gọi điện cho bố mẹ đến đón.",
+      "Đi một mình ra chỗ hẹn xem đối phương làm gì.",
+      "Bỏ trốn không về nhà nhiều ngày."
+    ],
+    "correctIndex": 1,
+    "explanation": "Bảo vệ an toàn tính mạng là ưu tiên số một. Nhờ sự can thiệp của người lớn và lực lượng bảo vệ giúp ngăn chặn xung đột nguy hiểm."
+  },
+  {
+    "id": 22,
+    "question": "Thuốc lá điện tử dùng một lần (Disposable Pod) có đặc điểm ngụy trang như thế nào?",
+    "category": "vape",
+    "options": [
+      "Luôn có kích thước to như chiếc cặp sách.",
+      "Ngụy trang hình thỏi son, hộp sữa chua, bút dạ quang, nhân vật hoạt hình ngộ nghĩnh, mùi kẹo đào ngọt ngào.",
+      "Bắt buộc phải có nhãn cảnh báo đầu lâu xương chéo rõ rệt.",
+      "Chỉ có màu đen tuyền và mùi khét lẹt."
+    ],
+    "correctIndex": 1,
+    "explanation": "Thiết kế ngụy trang đồ chơi và hương vị ngọt ngào chính là chiếc bẫy tinh vi nhắm thẳng vào sự tò mò của học sinh THCS, THPT."
+  },
+  {
+    "id": 23,
+    "question": "Bánh Lười (Lazy Cakes) hoặc Chocolate bán trôi nổi trên mạng có thể chứa chất nguy hiểm nào?",
+    "category": "drugs",
+    "options": [
+      "Men nở bánh mì thông thường.",
+      "Chất Cần sa (THC) hoặc ma túy tổng hợp gây ảo giác, ngộ độc thần kinh.",
+      "Bột cacao nguyên chất.",
+      "Bột sữa béo organic."
+    ],
+    "correctIndex": 1,
+    "explanation": "Bánh và kẹo tẩm cần sa khi ăn vào sẽ mất từ 30-60 phút mới ngấm, khiến người dùng dễ ăn quá liều dẫn đến ngộ độc sâu và loạn nhịp tim."
+  },
+  {
+    "id": 24,
+    "question": "Theo Bộ luật Hình sự Việt Nam, người từ đủ 14 tuổi đến dưới 16 tuổi phải chịu trách nhiệm hình sự về tội nào sau đây?",
+    "category": "drugs",
+    "options": [
+      "Mọi tội phạm bất kể nặng nhẹ.",
+      "Tội phạm rất nghiêm trọng hoặc đặc biệt nghiêm trọng (như giết người, tàng trữ/vận chuyển/mua bán trái phép chất ma túy).",
+      "Không bao giờ phải chịu trách nhiệm hình sự.",
+      "Chỉ phải chịu phạt tiền hành chính."
+    ],
+    "correctIndex": 1,
+    "explanation": "Người từ đủ 14 tuổi đã phải chịu trách nhiệm hình sự về các tội rất nghiêm trọng và đặc biệt nghiêm trọng quy định tại Điều 12 Bộ luật Hình sự."
+  },
+  {
+    "id": 25,
+    "question": "Để xây dựng \"Trường Học Xanh Không Khói Thuốc\", vai trò của mỗi học sinh là gì?",
+    "category": "tobacco",
+    "options": [
+      "Thấy bạn hút thuốc thì coi như không biết.",
+      "Chủ động nói không, vận động bạn bè không hút thuốc và cùng giữ gìn khuôn viên trường lớp trong lành.",
+      "Chỉ nhắc nhở người khác khi có mặt thầy cô giáo.",
+      "Chỉ quan tâm đến việc học chữ của riêng mình."
+    ],
+    "correctIndex": 1,
+    "explanation": "Mỗi học sinh chính là một đại sứ hạt nhân lan tỏa nếp sống văn minh, tự bảo vệ lá phổi của bản thân và cả lớp."
+  },
+  {
+    "id": 26,
+    "question": "Nếu vô tình uống phải nước lạ và cảm thấy hoa mắt, tim đập thình thịch, mất thăng bằng, em cần làm gì ngay lập tức?",
+    "category": "drugs",
+    "options": [
+      "Tìm chỗ vắng người nằm ngủ một mình.",
+      "Hô to cầu cứu người xung quanh, chạy đến phòng y tế của trường hoặc báo ngay cho người lớn để đưa đi cấp cứu.",
+      "Uống thêm nhiều nước ngọt khác vào người.",
+      "Giấu giếm vì sợ bị khiển trách."
+    ],
+    "correctIndex": 1,
+    "explanation": "Ngộ độc chất kích thích lạ có thể chuyển biến xấu trong vài phút. Cần tìm sự trợ giúp y tế ngay lập tức để được cấp cứu kịp thời."
+  },
+  {
+    "id": 27,
+    "question": "Khí Carbon Monoxide (CO) trong khói thuốc lá gây tác hại trực tiếp gì cho cơ thể?",
+    "category": "tobacco",
+    "options": [
+      "Làm tăng nồng độ Oxy trong máu.",
+      "Chiếm chỗ của Oxy trong hồng cầu, làm các cơ quan và não bộ bị thiếu dưỡng khí trầm trọng.",
+      "Giúp tim đập đều đặn và khỏe mạnh hơn.",
+      "Làm mắt sáng hơn."
+    ],
+    "correctIndex": 1,
+    "explanation": "Khí CO gắn chặt với hemoglobin trong máu, khiến tim phải làm việc cật lực hơn để bù đắp lượng oxy bị thiếu hụt."
+  },
+  {
+    "id": 28,
+    "question": "Tại sao việc \"chụp ảnh dìm hàng, chế ảnh bạn cùng lớp đăng lên mạng để câu view\" lại là hành vi sai trái?",
+    "category": "violence",
+    "options": [
+      "Vì chỉ có người nổi tiếng mới được phép chế ảnh.",
+      "Vì xâm phạm quyền riêng tư, xúc phạm nhân phẩm danh dự của bạn và có thể đẩy bạn vào khủng hoảng tâm lý.",
+      "Vì làm tốn dung lượng của điện thoại.",
+      "Vì không kiếm được tiền từ mạng xã hội."
+    ],
+    "correctIndex": 1,
+    "explanation": "Mỗi cá nhân đều có quyền được bảo vệ hình ảnh và danh dự theo Hiến pháp và Pháp luật. Đùa cợt trên nỗi đau của người khác là bắt nạt."
+  },
+  {
+    "id": 29,
+    "question": "Quy tắc an toàn nào sau đây giúp học sinh phòng tránh bị đầu độc hoặc lừa dùng chất lạ ngoài cổng trường?",
+    "category": "drugs",
+    "options": [
+      "Ai cho kẹo hay nước miễn phí cũng nhận để tiết kiệm tiền.",
+      "Tuyệt đối không nhận đồ ăn, thức uống không rõ nguồn gốc từ người lạ mặt.",
+      "Cứ thử trước một miếng nhỏ nếu ngon thì ăn tiếp.",
+      "Rủ thêm bạn bè cùng ăn thử đồ lạ cho vui."
+    ],
+    "correctIndex": 1,
+    "explanation": "Kẻ xấu thường dùng chiêu trò phát đồ ăn vặt miễn phí, tẩm chất gây nghiện để dụ dỗ học sinh dính bẫy."
+  },
+  {
+    "id": 30,
+    "question": "Pin trong thiết bị thuốc lá điện tử tiềm ẩn nguy cơ tai nạn nào?",
+    "category": "vape",
+    "options": [
+      "Bị tan chảy thành nước giải khát.",
+      "Chập cháy, phát nổ gây bỏng vùng mặt, dập nát bàn tay và chấn thương hàm mặt nghiêm trọng.",
+      "Phát ra sóng vô tuyến có lợi cho sức khỏe.",
+      "Không bao giờ có nguy cơ hỏng hóc."
+    ],
+    "correctIndex": 1,
+    "explanation": "Pin lithium trôi nổi không qua kiểm định trong Pod rất dễ quá nhiệt, phát nổ ngay trong túi quần hoặc khi đưa lên miệng hút."
+  },
+  {
+    "id": 31,
+    "question": "Khi bị bạn bè gạ gẫm: \"Không dám hút Pod thì là đồ nhát gan, không xứng đáng chơi cùng nhóm\", câu trả lời thể hiện bản lĩnh là gì?",
+    "category": "vape",
+    "options": [
+      "\"Sợ gì chứ, đưa đây tớ hút cho xem!\"",
+      "\"Bản lĩnh của tớ là biết tự bảo vệ sức khỏe của mình. Nếu cậu chỉ chơi với tớ vì điếu Pod thì tớ không cần tình bạn này.\"",
+      "Khóc lóc van xin nhóm cho chơi cùng.",
+      "Lẳng lặng cầm điếu Pod mang về nhà giấu."
+    ],
+    "correctIndex": 1,
+    "explanation": "Bản lĩnh thực sự là dám nói KHÔNG trước áp lực đám đông để bảo vệ giá trị và tương lai của chính mình."
+  },
+  {
+    "id": 32,
+    "question": "Kênh báo cáo sự việc ẩn danh trên ứng dụng \"Lá Chắn Học Đường\" mang lại lợi ích gì cho học sinh?",
+    "category": "violence",
+    "options": [
+      "Để nói xấu bạn bè mà không bị phát hiện.",
+      "Giúp học sinh dũng cảm phản ánh bạo lực, ma túy, thuốc lá một cách bảo mật danh tính, nhận mã theo dõi để trao đổi an toàn.",
+      "Để chơi trò chơi tích điểm đổi quà.",
+      "Để nhắn tin làm quen kết bạn."
+    ],
+    "correctIndex": 1,
+    "explanation": "Kênh ẩn danh bảo vệ sự an toàn tối đa cho học sinh lên tiếng, ngăn chặn nguy cơ bị trả thù hoặc kỳ thị."
+  },
+  {
+    "id": 33,
+    "question": "Nấm Thức Thần (Magic Mushrooms) được xếp vào nhóm chất nào?",
+    "category": "drugs",
+    "options": [
+      "Nấm dinh dưỡng bồi bổ cơ thể.",
+      "Chất ma túy có chứa Psilocybine và Psilocine cực độc, gây ảo giác hoang tưởng và ngộ độc thần kinh.",
+      "Nấm linh chi dược liệu quý.",
+      "Rau sạch dùng trong nấu ăn hàng ngày."
+    ],
+    "correctIndex": 1,
+    "explanation": "Nấm thức thần nằm trong danh mục chất ma túy tuyệt đối cấm sử dụng trong y học và đời sống xã hội tại Việt Nam."
+  },
+  {
+    "id": 34,
+    "question": "Hành vi cô lập, không cho ai trong lớp nói chuyện với một bạn học sinh được gọi là gì?",
+    "category": "violence",
+    "options": [
+      "Rèn luyện tính tự lập cho bạn.",
+      "Bạo lực quan hệ / Cô lập xã hội - một hình thức bạo lực học đường tinh vi gây tổn thương tâm lý sâu sắc.",
+      "Một trò chơi tập thể lành mạnh.",
+      "Quy tắc ứng xử văn minh trong trường."
+    ],
+    "correctIndex": 1,
+    "explanation": "Sự cô lập tẩy chay khiến nạn nhân rơi vào trầm cảm, lo âu và tuyệt vọng, là một trong những dạng bạo lực học đường độc hại nhất."
+  },
+  {
+    "id": 35,
+    "question": "Điều gì sau đây là ĐÚNG về việc cai nghiện Pod / Thuốc lá điện tử?",
+    "category": "vape",
+    "options": [
+      "Cực kỳ dễ dàng, chỉ cần muốn là bỏ được ngay không cần cố gắng.",
+      "Rất khó khăn vì muối Nicotine trong Pod gây nghiện sâu cả về thể chất lẫn tâm lý; cần có ý chí, sự hỗ trợ y tế và đồng hành của người thân.",
+      "Chỉ cần chuyển sang hút thuốc lá truyền thống là cai được Pod.",
+      "Pod không có chất gây nghiện nên không cần cai."
+    ],
+    "correctIndex": 1,
+    "explanation": "Muối nicotine tổng hợp có khả năng gây nghiện cực kỳ nhanh chóng. Tốt nhất là KHÔNG BAO GIỜ THỬ DÙ CHỈ MỘT HƠI."
+  },
+  {
+    "id": 36,
+    "question": "Mục tiêu cao nhất của mô hình \"Trường Học Xanh\" là gì?",
+    "category": "drugs",
+    "options": [
+      "Chỉ tập trung vào việc trồng thêm cây xanh trong sân trường.",
+      "Xây dựng môi trường giáo dục an toàn, lành mạnh, không ma túy, không bạo lực, không khói thuốc, nơi mọi học sinh được tôn trọng và phát triển toàn diện.",
+      "Tổ chức nhiều kỳ thi học sinh giỏi.",
+      "Chấm điểm thi đua giữa các lớp."
+    ],
+    "correctIndex": 1,
+    "explanation": "\"Trường Học Xanh\" là mái nhà bình yên nuôi dưỡng những mầm xanh khỏe mạnh về cả thể chất, tinh thần và nhân cách."
+  },
+  {
+    "id": 37,
+    "question": "Theo Bộ luật Hình sự Việt Nam, người từ đủ bao nhiêu tuổi phải chịu trách nhiệm hình sự về tội rất nghiêm trọng và đặc biệt nghiêm trọng (như tàng trữ, mua bán trái phép chất ma túy)?",
+    "category": "drugs",
+    "options": [
+      "Từ đủ 18 tuổi.",
+      "Từ đủ 14 tuổi.",
+      "Từ đủ 12 tuổi.",
+      "Từ đủ 20 tuổi."
+    ],
+    "correctIndex": 1,
+    "explanation": "Theo Điều 12 Bộ luật Hình sự, người từ đủ 14 tuổi đến dưới 16 tuổi phải chịu trách nhiệm hình sự về tội phạm rất nghiêm trọng, tội phạm đặc biệt nghiêm trọng do cố ý.",
+    "dangerAlert": "Quy định pháp luật hình sự hiện hành!"
+  },
+  {
+    "id": 38,
+    "question": "\"Tem giấy\" (Bùa lưỡi) là loại ma túy ngụy trang chứa chất gì cực kỳ nguy hiểm?",
+    "category": "drugs",
+    "options": [
+      "Chỉ là miếng giấy dán hình hoạt hình bình thường.",
+      "Chứa chất LSD (Lysergic Acid Diethylamide) - ma túy gây ảo giác cực mạnh chỉ với liều lượng vài microgram, gây hoang tưởng và mất kiểm soát hành vi.",
+      "Bột baking soda tẩm màu thực phẩm.",
+      "Miếng ngậm thơm miệng chiết xuất bạc hà."
+    ],
+    "correctIndex": 1,
+    "explanation": "Tem giấy tẩm chất LSD ngấm trực tiếp qua niêm mạc lưỡi, gây biến dạng nhận thức thị giác và thính giác, dễ dẫn đến tự sát do ảo giác."
+  },
+  {
+    "id": 39,
+    "question": "Hành vi \"Doxing\" (cố ý thu thập và phát tán thông tin đời tư, địa chỉ nhà, số điện thoại của bạn học lên mạng để kêu gọi tấn công) là gì?",
+    "category": "violence",
+    "options": [
+      "Một trò đùa vô hại giúp bạn nổi tiếng hơn.",
+      "Hành vi vi phạm nghiêm trọng Luật An ninh mạng và Luật Trẻ em, xâm phạm quyền riêng tư và gây khủng hoảng tâm lý cho nạn nhân.",
+      "Phương pháp giao lưu kết bạn văn minh.",
+      "Hình thức quảng bá trang cá nhân được khuyến khích."
+    ],
+    "correctIndex": 1,
+    "explanation": "Phát tán thông tin đời tư của người khác khi chưa được phép là hành vi vi phạm pháp luật, có thể bị xử phạt hành chính hoặc truy cứu trách nhiệm hình sự."
+  },
+  {
+    "id": 40,
+    "question": "Khi nhìn thấy khói thuốc lá điện tử có mùi thơm như kẹo hoa quả, nhận định nào sau đây là KHOA HỌC?",
+    "category": "vape",
+    "options": [
+      "Mùi thơm chứng tỏ làn khói này hoàn toàn sạch và tốt cho sức khỏe.",
+      "Mùi hương nhân tạo chỉ là lớp vỏ bọc che đậy hỗn hợp khí dung độc hại chứa Nicotine, Formaldehyde và các hạt bụi kim loại siêu mịn.",
+      "Hít khói thơm giúp thanh lọc phổi học sinh.",
+      "Làn khói này không chứa bất kỳ chất hóa học nào."
+    ],
+    "correctIndex": 1,
+    "explanation": "Hương liệu tạo mùi (như Diacetyl) khi bị đốt nóng ở nhiệt độ cao trong buồng đốt Pod sẽ biến đổi thành chất độc gây phá hủy phế nang phổi."
+  },
+  {
+    "id": 41,
+    "question": "Socola bay, Kẹo mút cần sa (Cannabis candy) thường chứa chất gì?",
+    "category": "drugs",
+    "options": [
+      "Chỉ là kẹo socola thông thường có hương vị thảo mộc.",
+      "Chứa tinh chất cần sa (THC - Tetrahydrocannabinol) gây ức chế thần kinh, ngộ độc cấp tính và suy giảm trí nhớ nghiêm trọng ở lứa tuổi đang phát triển.",
+      "Cacao nguyên chất giàu dinh dưỡng.",
+      "Kẹo ngậm bổ sung canxi."
+    ],
+    "correctIndex": 1,
+    "explanation": "Các đối tượng tội phạm ngụy trang cần sa vào kẹo bánh bắt mắt để lừa gạt học sinh. Ăn phải các loại kẹo này gây co giật, ảo giác và ngộ độc."
+  },
+  {
+    "id": 42,
+    "question": "Nếu em chứng kiến một bạn học cùng trường bị nhóm người chặn đánh và quay video clip, hành động thông minh và an toàn nhất là gì?",
+    "category": "violence",
+    "options": [
+      "Lấy điện thoại ra quay video rồi đăng ngay lên mạng xã hội để câu like.",
+      "Đứng xem và cổ vũ để không bị nhóm đánh để ý.",
+      "Không lao vào đối đầu tay đôi một mình; nhanh chóng chạy đến phòng bảo vệ, báo thầy cô giám thị hoặc gọi 113/111 can thiệp khẩn cấp.",
+      "Giữ im lặng và đi về nhà coi như không thấy gì."
+    ],
+    "correctIndex": 2,
+    "explanation": "Báo ngay cho người lớn có trách nhiệm là cách giải cứu bạn hiệu quả nhất mà vẫn bảo vệ an toàn tính mạng cho chính mình."
+  },
+  {
+    "id": 43,
+    "question": "Hội chứng EVALI (E-cigarette or Vaping product use-Associated Lung Injury) là gì?",
+    "category": "vape",
+    "options": [
+      "Một loại chứng bệnh dị ứng thời tiết nhẹ.",
+      "Tổn thương phổi cấp tính nghiêm trọng do sử dụng thuốc lá điện tử, có thể dẫn đến suy hô hấp phải thở máy và tử vong.",
+      "Tên một loại hương vị Pod mới ra mắt.",
+      "Bài tập thể dục hít thở dành cho người hút thuốc."
+    ],
+    "correctIndex": 1,
+    "explanation": "Tổ chức Y tế Thế giới (WHO) và CDC Hoa Kỳ ghi nhận hàng nghìn ca suy hô hấp cấp và tử vong vì hội chứng EVALI do khói thuốc lá điện tử."
+  },
+  {
+    "id": 44,
+    "question": "Thuốc lá nung nóng (Heated Tobacco Products - HTPs) có an toàn hơn thuốc lá thường không?",
+    "category": "tobacco",
+    "options": [
+      "Hoàn toàn không độc vì thuốc không bị đốt cháy thành tàn lửa.",
+      "Không an toàn! Vẫn sinh ra khí thải độc hại, Nicotine và các hợp chất gây ung thư tương tự như thuốc lá truyền thống.",
+      "Là phương pháp chữa bệnh hô hấp đã được chứng minh.",
+      "Chỉ độc đối với trẻ em dưới 6 tuổi."
+    ],
+    "correctIndex": 1,
+    "explanation": "Bộ Y tế khẳng định thuốc lá nung nóng vẫn sử dụng nguyên liệu lá thuốc lá và chứa hàng trăm hóa chất độc hại, gây nghiện tương tự thuốc lá điếu."
+  },
+  {
+    "id": 45,
+    "question": "Khi một người bạn nói: \"Chỉ thử 1 điếu Pod thôi, không bao giờ nghiện được đâu\", sự thật là gì?",
+    "category": "vape",
+    "options": [
+      "Bạn nói đúng, phải hút cả tháng mới có thể nghiện.",
+      "Sai hoàn toàn! Nồng độ Nicotine trong 1 điếu Pod dùng một lần rất cao, chỉ cần vài hơi đã tác động lên thụ thể não bộ và tạo cơ chế nghiện lệ thuộc sinh học.",
+      "Chỉ nghiện khi mua phải tinh dầu kém chất lượng.",
+      "Học sinh có sức đề kháng cao nên không bị nghiện."
+    ],
+    "correctIndex": 1,
+    "explanation": "Não bộ thanh thiếu niên đang trong giai đoạn hoàn thiện, rất nhạy cảm với Nicotine. Thử một lần là mở cánh cửa bước vào con đường nghiện ngập."
+  },
+  {
+    "id": 46,
+    "question": "Hành vi xúc phạm danh dự, nhân phẩm của giáo viên hoặc bạn học trên các nhóm chat kín trên mạng bị xử lý thế nào?",
+    "category": "violence",
+    "options": [
+      "Nhóm kín thì không ai biết nên không bị coi là vi phạm.",
+      "Vẫn là hành vi xúc phạm và bắt nạt trực tuyến, vi phạm nội quy nhà trường và có thể bị phạt tiền theo Nghị định 144/2021/NĐ-CP của Chính phủ.",
+      "Được coi là tự do ngôn luận không giới hạn.",
+      "Chỉ bị nhắc nhở bằng lời nói mà không chịu trách nhiệm gì."
+    ],
+    "correctIndex": 1,
+    "explanation": "Không gian mạng không phải là vùng cấm pháp luật. Mọi hành vi làm nhục, xúc phạm người khác dù trong nhóm kín vẫn để lại dấu vết kỹ thuật số và bị xử lý."
+  },
+  {
+    "id": 47,
+    "question": "Các chất ma túy tổng hợp như Ketamine, Methamphetamine tàn phá cơ thể con người mạnh nhất ở cơ quan nào?",
+    "category": "drugs",
+    "options": [
+      "Móng tay và tóc.",
+      "Hệ thần kinh trung ương và não bộ, gây teo não, mất trí nhớ, ảo giác hoang tưởng và trầm cảm nặng.",
+      "Lớp da bên ngoài.",
+      "Răng hàm mặt."
+    ],
+    "correctIndex": 1,
+    "explanation": "Ma túy đá và chất kích thích tổng hợp phá hủy các tế bào thần kinh không thể phục hồi, dẫn đến chứng \"ngáo đá\", mất nhân tính và hành vi bạo lực điên cuồng."
+  },
+  {
+    "id": 48,
+    "question": "Tại sao việc tham gia phong trào \"Ký cam kết Trường Học Xanh\" lại có ý nghĩa thiết thực?",
+    "category": "drugs",
+    "options": [
+      "Để lấy thành tích hình thức cho lớp.",
+      "Thể hiện tinh thần tự giác, xác lập lời hứa danh dự của bản thân, lan tỏa sức mạnh tập thể và cùng nhau giám sát xây dựng môi trường học đường an toàn.",
+      "Để được miễn các bài kiểm tra trên lớp.",
+      "Chỉ dành riêng cho ban cán sự lớp."
+    ],
+    "correctIndex": 1,
+    "explanation": "Cam kết hành động xuất phát từ nhận thức sâu sắc là bước đệm biến tri thức thành bản lĩnh sống vững vàng cho mỗi học sinh."
+  },
+  {
+    "id": 49,
+    "question": "Nếu phát hiện một vật thể nghi là bơm kim tiêm hoặc gói chất bột lạ rơi trong khuôn viên trường, học sinh cần làm gì?",
+    "category": "drugs",
+    "options": [
+      "Nhặt lên cầm chơi hoặc mang về nhà xem thử.",
+      "Dùng chân đá bay vào thùng rác.",
+      "Không chạm vào vật thể, cảnh báo các bạn xung quanh tránh xa và báo ngay cho thầy cô quản lý, bảo vệ trường học xử lý an toàn.",
+      "Rủ bạn bè nếm thử xem vị gì."
+    ],
+    "correctIndex": 2,
+    "explanation": "Kim tiêm có thể chứa mầm bệnh lây qua đường máu (HIV, viêm gan B) và chất bột lạ có thể độc hại khi tiếp xúc. Tuyệt đối không chạm tay vào tang vật!"
+  },
+  {
+    "id": 50,
+    "question": "Khí cười (bóng cười - N2O) thường xuất hiện ở các quán bar, quán cà phê có tác hại gì đối với học sinh?",
+    "category": "drugs",
+    "options": [
+      "Chỉ làm học sinh cười vui vẻ và thông minh hơn.",
+      "Khí N2O gây tê liệt tủy sống, tổn thương dây thần kinh ngoại biên, thiếu oxy não nghiêm trọng và có thể dẫn đến liệt toàn thân.",
+      "Cung cấp oxy tinh khiết cho phổi.",
+      "Giúp học sinh ngủ ngon mà không có tác dụng phụ."
+    ],
+    "correctIndex": 1,
+    "explanation": "Hít bóng cười nhiều lần làm bất hoạt vitamin B12 trong cơ thể, dẫn đến thoái hóa tủy sống bán cấp, tê liệt tứ chi và tử vong do thiếu oxy não."
+  },
+  {
+    "id": 51,
+    "question": "Để xây dựng \"Tình bạn đẹp\" trong trường học và ngăn chặn bạo lực học đường, yếu tố nào là QUAN TRỌNG NHẤT?",
+    "category": "violence",
+    "options": [
+      "Phải luôn bao che cho lỗi lầm và hành vi sai trái của bạn.",
+      "Tôn trọng sự khác biệt, lắng nghe, giúp đỡ nhau cùng tiến bộ trong học tập và dũng cảm khuyên bạn từ bỏ những thói quen có hại.",
+      "Cùng nhau tham gia các cuộc ẩu đả để chứng minh sự đoàn kết.",
+      "Chỉ chơi với những bạn có điều kiện kinh tế khá giả."
+    ],
+    "correctIndex": 1,
+    "explanation": "Tình bạn chân chính là cùng nhau vươn lên thành người tử tế, biết nhắc nhở và ngăn cản bạn khi bạn có dấu hiệu sa ngã vào tệ nạn."
+  },
+  {
+    "id": 52,
+    "question": "Học sinh có thể tải tác phẩm video, ảnh cổ động do chính mình sáng tạo lên thư mục nào của trường?",
+    "category": "vape",
+    "options": [
+      "Đăng lên bất kỳ trang mạng xã hội cá nhân nào.",
+      "Tải trực tiếp vào Thư mục Google Drive dùng chung của trường (https://drive.google.com/drive/folders/1ijceyQzDFP0W4ZO3XSpt0GYNUtJN59CS?usp=sharing) và điền link lên hệ thống Trường Học Xanh.",
+      "Gửi thư tay qua đường bưu điện.",
+      "Chép vào đĩa CD gửi về văn phòng trường."
+    ],
+    "correctIndex": 1,
+    "explanation": "Hệ thống Trường Học Xanh kết nối trực tiếp với thư mục Google Drive trường để lưu trữ an toàn và hiển thị công khai tác phẩm dự thi của học sinh."
+  }
+]
