@@ -1,74 +1,27 @@
-import React, { useState } from 'react';
-import { Bot, MessageCircle, AlertTriangle, X, Shield, Sparkles } from 'lucide-react';
-import { ActiveTab } from '../types';
+import React from 'react';
 
 interface FloatingMascotProps {
   onOpenAi: () => void;
-  onOpenReport: () => void;
+  onOpenReport?: () => void;
 }
 
-export const FloatingMascot: React.FC<FloatingMascotProps> = ({ onOpenAi, onOpenReport }) => {
-  const [showTooltip, setShowTooltip] = useState(true);
-
+export const FloatingMascot: React.FC<FloatingMascotProps> = ({ onOpenAi }) => {
   return (
-    <div className="fixed bottom-20 right-4 z-40 flex flex-col items-end pointer-events-auto">
-      {/* Speech bubble popup */}
-      {showTooltip && (
-        <div className="mb-2 max-w-[210px] bg-white rounded-2xl p-2.5 shadow-xl border border-blue-100 text-xs text-slate-800 relative animate-in fade-in slide-in-from-bottom-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowTooltip(false);
-            }}
-            className="absolute -top-1.5 -left-1.5 w-4 h-4 bg-slate-200 hover:bg-slate-300 rounded-full flex items-center justify-center text-slate-600 text-[10px]"
-          >
-            <X className="w-2.5 h-2.5" />
-          </button>
-          <div className="flex items-center gap-1.5 text-blue-700 font-bold mb-1">
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>Cố Vấn Học Đường</span>
-          </div>
-          <p className="text-[11px] text-slate-600 leading-snug">
-            Em có thắc mắc về ma túy, bạo lực hay cần giúp đỡ? Chú luôn ở đây!
-          </p>
-          <div className="mt-2 flex gap-1">
-            <button
-              onClick={() => {
-                setShowTooltip(false);
-                onOpenAi();
-              }}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-1 px-1.5 text-[10px] font-bold text-center"
-            >
-              Tâm sự AI
-            </button>
-            <button
-              onClick={() => {
-                setShowTooltip(false);
-                onOpenReport();
-              }}
-              className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg py-1 px-1.5 text-[10px] font-bold text-center"
-            >
-              Báo cáo
-            </button>
-          </div>
-          {/* Arrow */}
-          <div className="absolute -bottom-2 right-5 w-3 h-3 bg-white border-r border-b border-blue-100 rotate-45" />
-        </div>
-      )}
-
-      {/* Mascot Circle Button */}
+    <aside aria-label="Cố vấn học đường" className="fixed bottom-20 right-3.5 sm:right-5 z-40 flex flex-col items-center pointer-events-auto">
+      {/* Mascot Circle Button - Pulsing/Blinking Animation */}
       <button
         onClick={onOpenAi}
-        className="group relative w-14 h-14 rounded-full bg-linear-to-b from-blue-600 to-indigo-700 p-0.5 shadow-xl shadow-blue-600/30 hover:scale-105 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
-        title="Trợ lý AI Học Đường - Chú Công An Thân Thiện"
+        className="group relative w-13 h-13 sm:w-14 sm:h-14 rounded-full p-0.5 shadow-xl shadow-emerald-700/35 hover:scale-110 active:scale-95 transition-all duration-300 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-4 focus:ring-emerald-400/50"
+        title="Cố Vấn AI Học Đường - Chú Công An Thân Thiện (Nhấn để trò chuyện)"
       >
-        {/* Animated pulse ring */}
-        <span className="absolute -inset-1 rounded-full bg-blue-400 opacity-40 animate-ping pointer-events-none" />
+        {/* Outer animated pulsating waves (nhấp nháy thu hút sự chú ý) */}
+        <span className="absolute -inset-1 rounded-full bg-emerald-400/50 animate-ping pointer-events-none duration-1000" />
+        <span className="absolute -inset-2 rounded-full bg-teal-400/25 animate-pulse pointer-events-none duration-1500" />
 
-        {/* Mascot Face Icon Representation */}
-        <div className="w-full h-full rounded-full bg-linear-to-b from-emerald-500 to-green-700 overflow-hidden flex items-center justify-center border-2 border-white relative">
+        {/* Mascot Face Avatar Container */}
+        <div className="w-full h-full rounded-full bg-linear-to-b from-emerald-500 to-green-700 overflow-hidden flex items-center justify-center border-2 border-white shadow-inner relative z-10">
           {/* SVG Police Officer Mascot Avatar */}
-          <svg viewBox="0 0 100 100" className="w-full h-full">
+          <svg viewBox="0 0 100 100" className="w-full h-full group-hover:scale-105 transition duration-300">
             {/* Background circle */}
             <circle cx="50" cy="50" r="48" fill="#15803d" />
             {/* Green Uniform Collar & Shoulders */}
@@ -100,9 +53,14 @@ export const FloatingMascot: React.FC<FloatingMascotProps> = ({ onOpenAi, onOpen
           </svg>
         </div>
 
-        {/* Online Indicator */}
-        <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white shadow-xs" />
+        {/* Live Active Pulsing Dot */}
+        <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-white shadow-xs z-20 animate-pulse" />
       </button>
-    </div>
+
+      {/* Tiny clean pill badge below button */}
+      <span className="mt-1 px-2 py-0.5 rounded-full bg-emerald-900/90 text-[9px] font-bold text-emerald-100 shadow-md backdrop-blur-xs select-none pointer-events-none">
+        Cố Vấn AI
+      </span>
+    </aside>
   );
 };

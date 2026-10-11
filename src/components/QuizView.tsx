@@ -412,12 +412,12 @@ export const QuizView: React.FC = () => {
             </div>
 
             {/* Combo Streak & Battle Log */}
-            <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1.5 text-amber-300 font-bold">
+            <div className="mt-4 pt-3 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
+              <div className="flex items-center gap-1.5 text-amber-300 font-bold shrink-0">
                 <Flame className="w-4 h-4 text-orange-500" />
                 <span>Combo Chuỗi Đúng: {combo} {combo >= 2 && '🔥 CHÍ MẠNG X' + combo}</span>
               </div>
-              <span className="text-slate-300 italic text-[11px]">{pvpBattleLog}</span>
+              <span className="text-slate-300 italic text-[11px] truncate">{pvpBattleLog}</span>
             </div>
           </div>
 

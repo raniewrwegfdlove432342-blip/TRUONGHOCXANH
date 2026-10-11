@@ -88,27 +88,27 @@ export const HomeView: React.FC<HomeViewProps> = ({
   return (
     <div className="space-y-6 pb-24">
       {/* 1. Distinctive Brand Hero Banner: TRƯỜNG HỌC XANH */}
-      <section className="bg-linear-to-br from-emerald-900 via-teal-900 to-emerald-800 text-white rounded-3xl p-5 sm:p-7 shadow-lg relative overflow-hidden border border-emerald-700/50">
+      <section className="bg-linear-to-br from-emerald-900 via-teal-900 to-emerald-800 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-lg relative overflow-hidden border border-emerald-700/50">
         <div className="absolute top-0 right-0 translate-x-10 -translate-y-10 w-44 h-44 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-linear-to-tr from-emerald-400 to-teal-300 text-slate-950 flex items-center justify-center font-black shadow-md shadow-emerald-500/20">
-              <Shield className="w-6 h-6 text-emerald-950" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-linear-to-tr from-emerald-400 to-teal-300 text-slate-950 flex items-center justify-center font-black shadow-md shadow-emerald-500/20 shrink-0">
+              <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-950" />
             </div>
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 text-[10px] font-black uppercase tracking-wider border border-emerald-400/30 mb-0.5">
-                <Sparkles className="w-3 h-3 text-amber-300" />
-                MẦM SỐNG KHỎE – TRỌN TUỔI HOA
+            <div className="min-w-0">
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 text-[9px] sm:text-[10px] font-black uppercase tracking-wider border border-emerald-400/30 mb-0.5">
+                <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-300 shrink-0" />
+                <span>MẦM SỐNG KHỎE – TRỌN TUỔI HOA</span>
               </div>
-              <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight">
+              <h2 className="text-base sm:text-2xl font-black text-white tracking-tight truncate">
                 XÂY DỰNG TRƯỜNG HỌC XANH
               </h2>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 text-xs font-bold flex items-center gap-1.5">
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <div className="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 text-[11px] sm:text-xs font-bold flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>Đồng hành: <strong>{pledgeCount.toLocaleString('vi-VN')}+</strong> thành viên</span>
             </div>
@@ -116,7 +116,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
 
         {/* Action Slogan Callout */}
-        <div className="p-3.5 bg-white/10 rounded-2xl backdrop-blur-xs border border-white/15 text-xs text-emerald-100 leading-relaxed italic mb-4">
+        <div className="p-3 sm:p-3.5 bg-white/10 rounded-xl sm:rounded-2xl backdrop-blur-xs border border-white/15 text-[11px] sm:text-xs text-emerald-100 leading-relaxed italic mb-3 sm:mb-4">
           "Tâm Sáng – Thân Trong – Trí Kiên: Vững vàng trước cám dỗ Pod & Ma túy, dũng cảm lên tiếng vì môi trường học đường không bạo lực!"
         </div>
 
@@ -134,7 +134,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 alert('Đã sao chép liên kết phong trào để chia sẻ cho bạn bè!');
               }
             }}
-            className="p-3 bg-white/15 hover:bg-white/25 border border-white/20 text-white rounded-2xl transition shadow-xs"
+            className="p-2.5 sm:p-3 bg-white/15 hover:bg-white/25 border border-white/20 text-white rounded-xl sm:rounded-2xl transition shadow-xs shrink-0"
             title="Chia sẻ với bạn bè"
           >
             <Share2 className="w-4 h-4" />
@@ -142,29 +142,29 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
           <button
             onClick={onOpenCommitment}
-            className="flex-1 py-3 px-4 bg-linear-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition active:scale-98"
+            className="flex-1 py-2.5 sm:py-3 px-3 sm:px-4 bg-linear-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black rounded-xl sm:rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 shadow-md transition active:scale-98"
           >
-            <Sparkles className="w-4 h-4 text-emerald-950" />
-            <span>Ký Cam Kết Đại Sứ Trường Học Xanh</span>
+            <Sparkles className="w-4 h-4 text-emerald-950 shrink-0" />
+            <span className="truncate">Ký Cam Kết Đại Sứ Trường Học Xanh</span>
           </button>
         </div>
       </section>
 
       {/* 2. 4 Trục Phát Triển Độc Bản: TRƯỜNG HỌC XANH */}
       <section>
-        <div className="flex items-center justify-between mb-3 px-1">
+        <div className="flex items-center justify-between mb-2.5 px-1">
           <div>
             <h2 className="text-xs sm:text-sm font-black text-emerald-950 uppercase tracking-tight flex items-center gap-1.5">
-              <Sprout className="w-4 h-4 text-emerald-600" />
+              <Sprout className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600" />
               <span>4 TRỤ CỘT BẢO VỆ MẦM XANH HỌC ĐƯỜNG</span>
             </h2>
-            <p className="text-[11px] text-slate-500 font-medium">
+            <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium">
               (Chạm vào từng trụ cột để xem bí kíp rèn luyện bản lĩnh)
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
           {PILLARS.map((pillar) => {
             const IconComponent =
               pillar.iconName === 'Heart'
@@ -179,17 +179,17 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <div
                 key={pillar.id}
                 onClick={() => onSelectPillar(pillar)}
-                className={`p-4 rounded-3xl border ${pillar.borderColorClass} ${pillar.bgColorClass} cursor-pointer transition-all hover:scale-[1.02] active:scale-98 shadow-xs flex flex-col justify-between min-h-[145px]`}
+                className={`p-3 sm:p-4 rounded-2xl sm:rounded-3xl border ${pillar.borderColorClass} ${pillar.bgColorClass} cursor-pointer transition-all hover:scale-[1.02] active:scale-98 shadow-xs flex flex-col justify-between min-h-[125px] sm:min-h-[145px]`}
               >
-                <div className="w-9 h-9 rounded-2xl bg-white shadow-xs flex items-center justify-center mb-2">
-                  <IconComponent className={`w-5 h-5 ${pillar.colorClass}`} />
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-white shadow-xs flex items-center justify-center mb-1.5 sm:mb-2 shrink-0">
+                  <IconComponent className={`w-4 h-4 sm:w-5 sm:h-5 ${pillar.colorClass}`} />
                 </div>
 
                 <div>
-                  <h3 className="text-xs sm:text-sm font-black text-slate-900 leading-snug">
+                  <h3 className="text-xs sm:text-sm font-black text-slate-900 leading-snug line-clamp-2">
                     {pillar.title}
                   </h3>
-                  <div className={`text-[11px] font-bold mt-1.5 flex items-center gap-1 ${pillar.colorClass}`}>
+                  <div className={`text-[10px] sm:text-[11px] font-bold mt-1 flex items-center gap-1 ${pillar.colorClass}`}>
                     <span className="truncate">{pillar.subtitle}</span>
                     <ArrowRight className="w-3 h-3 shrink-0" />
                   </div>

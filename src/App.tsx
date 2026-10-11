@@ -98,7 +98,7 @@ export default function App() {
   const showVideoTab = hasVideos || currentUser?.role === 'admin' || activeTab === 'student-videos';
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-emerald-100 selection:text-emerald-900">
+    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden w-full max-w-full">
       {/* Top Header */}
       <Header
         activeTab={activeTab}
@@ -166,7 +166,7 @@ export default function App() {
       </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 pt-4 sm:pt-6">
+      <main className="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-4 pt-3 sm:pt-6 overflow-x-hidden">
         {activeTab === 'home' && (
           <HomeView
             setActiveTab={setActiveTab}
