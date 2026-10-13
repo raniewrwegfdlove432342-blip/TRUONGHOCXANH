@@ -39,6 +39,22 @@ export const PillarDetailModal: React.FC<PillarDetailModalProps> = ({
           {pillar.content.tagline}
         </p>
 
+        {/* 16:9 Pillar Cover Image */}
+        {pillar.imageUrl && (
+          <div className="relative aspect-video w-full rounded-2xl overflow-hidden my-4 border border-slate-200/80 shadow-xs">
+            <img
+              src={pillar.imageUrl}
+              alt={pillar.title}
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = '/images/hero_primary_students.jpg';
+              }}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
         {/* Rules Breakdown */}
         <div className="my-5 space-y-3">
           {pillar.content.rules.map((rule, idx) => (

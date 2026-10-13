@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Eye, ThumbsUp, Calendar, Shield, Share2, CheckCircle2, ExternalLink } from 'lucide-react';
 import { NewsArticle } from '../types';
+import { getThemeFallbackImage, THEME_FALLBACK_IMAGES } from '../utils/articleImageHelper';
 
 interface ArticleModalProps {
   article: NewsArticle | null;
@@ -15,20 +16,30 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
 }) => {
   if (!article) return null;
 
+  const fallback = getThemeFallbackImage(article.category, article.title);
+  const [modalImg, setModalImg] = useState<string>(article.imageUrl || fallback);
+
+  useEffect(() => {
+    setModalImg(article.imageUrl || fallback);
+  }, [article.imageUrl, fallback]);
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl relative animate-in fade-in zoom-in-95 my-8">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-7 shadow-2xl relative animate-in fade-in zoom-in-95 my-6 sm:my-8 max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition z-10"
+          className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition z-10"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="relative rounded-2xl overflow-hidden mb-4 h-48 sm:h-56">
+        <div className="relative aspect-video w-full rounded-2xl overflow-hidden mb-4 bg-slate-900 shadow-xs border border-slate-100">
           <img
-            src={article.imageUrl}
+            src={modalImg}
             alt={article.title}
+            loading="lazy"
+            onError={() => setModalImg(fallback || THEME_FALLBACK_IMAGES.default)}
+            referrerPolicy="no-referrer"
             className="w-full h-full object-cover"
           />
           {article.badge && (

@@ -633,6 +633,7 @@ export const ReportIncidentView: React.FC<ReportIncidentViewProps> = ({
                     <img
                       src={evidenceUrl}
                       alt="Bằng chứng"
+                      referrerPolicy="no-referrer"
                       className="w-12 h-12 object-cover rounded-lg"
                     />
                     <div className="text-[11px] text-slate-600 flex-1">

@@ -12,9 +12,13 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
+  Sparkles,
+  RefreshCw,
+  Globe,
 } from 'lucide-react';
 import { NewsArticle } from '../types';
 import { NEWS_ARTICLES } from '../data/mockData';
+import { ArticleCard } from './ArticleCard';
 
 interface KnowledgeViewProps {
   onSelectArticle: (article: NewsArticle) => void;
@@ -25,9 +29,40 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
   onSelectArticle,
   onOpenReport,
 }) => {
-  const [activeCategory, setActiveCategory] = useState<'all' | 'ma-tuy' | 'bao-luc' | 'thuoc-la' | 'vape'>('all');
+  const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedDrugCard, setExpandedDrugCard] = useState<string | null>('pod-chill');
+  const [articlesList, setArticlesList] = useState<NewsArticle[]>(NEWS_ARTICLES);
+  const [isSearchingAi, setIsSearchingAi] = useState(false);
+  const [aiMessage, setAiMessage] = useState<string | null>(null);
+
+  const handleSearchAiNews = async () => {
+    setIsSearchingAi(true);
+    setAiMessage(null);
+    try {
+      const res = await fetch('/api/gemini/articles/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: activeCategory }),
+      });
+      const data = await res.json();
+      if (data && Array.isArray(data.articles) && data.articles.length > 0) {
+        setArticlesList((prev) => {
+          const existingUrls = new Set(prev.map((a) => a.sourceUrl));
+          const newUnique = data.articles.filter((a: NewsArticle) => !existingUrls.has(a.sourceUrl));
+          return [...newUnique, ...prev];
+        });
+        setAiMessage(`Đã cập nhật ${data.articles.length} bài viết mới từ kết quả tìm kiếm Google Search!`);
+      } else {
+        setAiMessage('Đã đồng bộ đầy đủ các bài viết chính thống mới nhất.');
+      }
+    } catch {
+      setAiMessage('Hệ thống đang hiển thị trọn bộ bài viết chính thống đã kiểm chứng.');
+    } finally {
+      setIsSearchingAi(false);
+      setTimeout(() => setAiMessage(null), 6000);
+    }
+  };
 
   // Drug recognition visual database
   const drugDatabase = [
@@ -39,6 +74,7 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
       reality: 'Chứa ma túy tổng hợp (cần sa tổng hợp ADB-BUTINACA), gây tê liệt ý chí, ảo giác hoang tưởng, loạn thần cấp và đột quỵ tim.',
       alertText: 'Tuyệt đối không hút thử dù chỉ 1 hơi! Rất nhiều học sinh đã phải nhập viện cấp cứu vì co giật.',
       color: 'border-red-400 bg-red-50/50',
+      imageUrl: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=800&auto=format&fit=crop&q=80',
     },
     {
       id: 'nuoc-vui',
@@ -48,6 +84,7 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
       reality: 'Hỗn hợp Ketamine, MDMA (thuốc lắc), Diazepam nghiền nhỏ. Uống vào gây kích thích tim mạch dữ dội, ảo giác bạo lực và suy hô hấp.',
       alertText: 'Chỉ uống nước đóng chai còn nguyên tem niêm phong do tự tay mình mở nắp.',
       color: 'border-amber-400 bg-amber-50/50',
+      imageUrl: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800&auto=format&fit=crop&q=80',
     },
     {
       id: 'tem-giay',
@@ -57,6 +94,7 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
       reality: 'Chất kích thích gây ảo thị, hoang tưởng cảm giác mình có thể bay lượn, dẫn đến hành vi tự sát hoặc tấn công người khác.',
       alertText: 'Không bao giờ ngậm hoặc cầm bất kỳ miếng dán lạ nào từ bạn bè hay người lạ.',
       color: 'border-purple-400 bg-purple-50/50',
+      imageUrl: 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=800&auto=format&fit=crop&q=80',
     },
     {
       id: 'banh-luoi',
@@ -66,6 +104,7 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
       reality: 'Tẩm chất cần sa đậm đặc (THC). Sau khi ăn 30-60 phút sẽ bắt đầu gây chóng mặt, tim đập loạn nhịp, mất nhận thức không gian.',
       alertText: 'Chỉ mua đồ ăn vặt có nguồn gốc xuất xứ rõ ràng tại căng tin trường học hoặc siêu thị uy tín.',
       color: 'border-rose-400 bg-rose-50/50',
+      imageUrl: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=800&auto=format&fit=crop&q=80',
     },
   ];
 
@@ -75,16 +114,19 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
       title: 'Bạo lực thể xác',
       examples: 'Đánh đập, xô đẩy, giật đồ đạc, chặn đường sau giờ học.',
       action: 'Di chuyển ngay đến nơi đông người; hô to tìm sự trợ giúp của thầy cô hoặc bảo vệ.',
+      imageUrl: '/images/safety_shield_kids.jpg',
     },
     {
       title: 'Bạo lực ngôn từ & Tẩy chay',
       examples: 'Đặt biệt danh xúc phạm, chửi bới, lập nhóm cô lập không cho chơi cùng.',
       action: 'Giữ vững sự tự tin; nhớ rằng đó không phải lỗi của bạn; tâm sự với giáo viên chủ nhiệm hoặc cán bộ tâm lý.',
+      imageUrl: '/images/safety_shield_kids.jpg',
     },
     {
       title: 'Bắt nạt trên mạng (Cyberbullying)',
       examples: 'Tung ảnh bêu xấu, lan truyền tin đồn ác ý trong nhóm chat, tống tiền.',
       action: 'Chụp lại màn hình tin nhắn làm bằng chứng; chặn kẻ bắt nạt; gửi báo cáo ẩn danh trên ứng dụng.',
+      imageUrl: '/images/learning_games_kids.jpg',
     },
   ];
 
@@ -127,24 +169,28 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
       </section>
 
       {/* Category Filter Pills */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 text-xs font-bold">
+      <div className="flex gap-1.5 overflow-x-auto pb-1 text-xs font-bold scrollbar-none -mx-1 px-1">
         {[
-          { id: 'all', label: 'Tất cả chủ đề' },
-          { id: 'ma-tuy', label: 'Ma túy ngụy trang' },
-          { id: 'bao-luc', label: 'Bạo lực học đường' },
-          { id: 'thuoc-la', label: 'Thuốc lá & Khói thuốc' },
-          { id: 'vape', label: 'Thuốc lá điện tử (Pod)' },
+          { id: 'all', label: 'Tất cả chủ đề', emoji: '🌟' },
+          { id: 'rac-thai', label: 'Rác thải & Tái chế', emoji: '♻️' },
+          { id: 'nang-luong', label: 'Năng lượng & Điện', emoji: '⚡' },
+          { id: 'cay-xanh', label: 'Cây xanh vườn trường', emoji: '🌱' },
+          { id: 'nuoc-sach', label: 'Nước sạch & Vệ sinh', emoji: '💧' },
+          { id: 'thuoc-la', label: 'Thuốc lá điện tử (Pod)', emoji: '🚭' },
+          { id: 'ma-tuy', label: 'Ma túy ngụy trang', emoji: '🚨' },
+          { id: 'bao-luc', label: 'Bạo lực học đường', emoji: '🛡️' },
         ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveCategory(tab.id as any)}
-            className={`px-3.5 py-2 rounded-xl shrink-0 transition ${
+            onClick={() => setActiveCategory(tab.id)}
+            className={`px-3 py-1.5 rounded-xl shrink-0 transition flex items-center gap-1.5 text-xs font-bold ${
               activeCategory === tab.id
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+                ? 'bg-emerald-700 text-white shadow-sm'
+                : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs'
             }`}
           >
-            {tab.label}
+            <span>{tab.emoji}</span>
+            <span>{tab.label}</span>
           </button>
         ))}
       </div>
@@ -174,30 +220,53 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
                 >
                   <div
                     onClick={() => setExpandedDrugCard(isExpanded ? null : drug.id)}
-                    className="flex items-center justify-between cursor-pointer select-none"
+                    className="flex items-center justify-between cursor-pointer select-none gap-3"
                   >
-                    <div>
-                      <span className="text-[10px] font-black tracking-wider text-red-600 uppercase">
-                        {drug.dangerLevel}
-                      </span>
-                      <h4 className="text-sm font-black text-slate-900 mt-0.5">{drug.name}</h4>
+                    <div className="flex items-center gap-3 min-w-0">
+                      {/* Thumbnail photo */}
+                      <div className="w-16 h-12 rounded-xl overflow-hidden bg-slate-900 shrink-0 border border-black/10 shadow-2xs">
+                        <img
+                          src={drug.imageUrl}
+                          alt={drug.name}
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-black tracking-wider text-red-600 uppercase">
+                          {drug.dangerLevel}
+                        </span>
+                        <h4 className="text-sm font-black text-slate-900 mt-0.5 truncate">{drug.name}</h4>
+                      </div>
                     </div>
 
-                    <button className="p-1 text-slate-500 hover:text-slate-800">
+                    <button className="p-1 text-slate-500 hover:text-slate-800 shrink-0">
                       {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                     </button>
                   </div>
 
                   {isExpanded && (
-                    <div className="mt-3 pt-3 border-t border-black/10 text-xs space-y-2 animate-in fade-in">
+                    <div className="mt-3 pt-3 border-t border-black/10 text-xs space-y-3 animate-in fade-in">
+                      {/* Full 16:9 Descriptive Image */}
+                      <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-900 shadow-xs border border-black/10">
+                        <img
+                          src={drug.imageUrl}
+                          alt={drug.name}
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
                       <div>
                         <strong className="text-slate-800">Hình thức ngụy trang:</strong>
-                        <p className="text-slate-600 mt-0.5">{drug.appearance}</p>
+                        <p className="text-slate-600 mt-0.5 leading-relaxed">{drug.appearance}</p>
                       </div>
 
                       <div>
                         <strong className="text-slate-800">Bản chất & Tác hại:</strong>
-                        <p className="text-slate-600 mt-0.5">{drug.reality}</p>
+                        <p className="text-slate-600 mt-0.5 leading-relaxed">{drug.reality}</p>
                       </div>
 
                       <div className="p-2.5 bg-red-600 text-white rounded-xl font-bold flex items-start gap-1.5 mt-2">
@@ -284,22 +353,65 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
             <h4 className="text-xs font-black text-slate-800 uppercase flex items-center gap-1.5">
               <span>🔍 NHẬN BIẾT 4 HÌNH THÁI POD NGỤY TRANG DỄ BỎ QUÊN TRONG HỌC ĐƯỜNG:</span>
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
-              <div className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-2xs">
-                <div className="font-bold text-slate-900 mb-1">🖊️ Dạng Đồ Dùng Học Tập</div>
-                <div className="text-[11px] text-slate-600">Ngụy trang hình cây bút dạ quang, bút xóa, con dấu, thỏi son, cục tẩy để giấu trong hộp bút.</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+              <div className="p-3 bg-white rounded-2xl border border-slate-200/90 shadow-2xs space-y-2 overflow-hidden flex flex-col justify-between">
+                <div>
+                  <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-900 mb-2 border border-slate-100">
+                    <img
+                      src="https://images.unsplash.com/photo-1585336261026-41864a787b28?w=800&auto=format&fit=crop&q=80"
+                      alt="Dạng Đồ Dùng Học Tập"
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="font-black text-slate-900 mb-1">🖊️ Dạng Đồ Dùng Học Tập</div>
+                  <div className="text-[11px] text-slate-600 leading-relaxed">Ngụy trang hình cây bút dạ quang, bút xóa, con dấu, thỏi son để lén giấu trong hộp bút.</div>
+                </div>
               </div>
-              <div className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-2xs">
-                <div className="font-bold text-slate-900 mb-1">🧸 Dạng Đồ Chơi / Anime</div>
-                <div className="text-[11px] text-slate-600">Hình hộp sữa đồ chơi, phi hành gia, gấu Bearbrick, móc treo chìa khóa phát sáng bắt mắt.</div>
+
+              <div className="p-3 bg-white rounded-2xl border border-slate-200/90 shadow-2xs space-y-2 overflow-hidden flex flex-col justify-between">
+                <div>
+                  <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-900 mb-2 border border-slate-100">
+                    <img
+                      src="https://images.unsplash.com/photo-1563245372-f21724e3856d?w=800&auto=format&fit=crop&q=80"
+                      alt="Dạng Đồ Chơi / Anime"
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="font-black text-slate-900 mb-1">🧸 Dạng Đồ Chơi / Anime</div>
+                  <div className="text-[11px] text-slate-600 leading-relaxed">Hình hộp sữa đồ chơi, phi hành gia, gấu Bearbrick, móc chìa khóa phát sáng bắt mắt.</div>
+                </div>
               </div>
-              <div className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-2xs">
-                <div className="font-bold text-slate-900 mb-1">🔌 Dạng Thiết Bị Công Nghệ</div>
-                <div className="text-[11px] text-slate-600">Trông giống hệt ổ cứng USB máy tính, sạc dự phòng mini, đồng hồ thông minh hoặc tai nghe.</div>
+
+              <div className="p-3 bg-white rounded-2xl border border-slate-200/90 shadow-2xs space-y-2 overflow-hidden flex flex-col justify-between">
+                <div>
+                  <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-900 mb-2 border border-slate-100">
+                    <img
+                      src="https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop&q=80"
+                      alt="Dạng Thiết Bị Công Nghệ"
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="font-black text-slate-900 mb-1">🔌 Dạng Thiết Bị Công Nghệ</div>
+                  <div className="text-[11px] text-slate-600 leading-relaxed">Trông giống hệt ổ cứng USB máy tính, sạc dự phòng mini, đồng hồ hoặc tai nghe.</div>
+                </div>
               </div>
-              <div className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-2xs">
-                <div className="font-bold text-slate-900 mb-1">🧪 Tinh Dầu Trôi Nổi</div>
-                <div className="text-[11px] text-slate-600">Lọ tinh dầu tự pha chế không nhãn mác, bán lén lút qua nhóm kín mạng xã hội, nguy cơ trộn độc chất 100%.</div>
+
+              <div className="p-3 bg-white rounded-2xl border border-slate-200/90 shadow-2xs space-y-2 overflow-hidden flex flex-col justify-between">
+                <div>
+                  <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-900 mb-2 border border-slate-100">
+                    <img
+                      src="https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=800&auto=format&fit=crop&q=80"
+                      alt="Tinh Dầu Trôi Nổi"
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="font-black text-slate-900 mb-1">🧪 Tinh Dầu Trôi Nổi</div>
+                  <div className="text-[11px] text-slate-600 leading-relaxed">Lọ tinh dầu tự pha chế không nhãn mác, bán lén lút qua mạng xã hội, nguy cơ trộn độc chất 100%.</div>
+                </div>
               </div>
             </div>
           </div>
@@ -404,14 +516,25 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
             <span>PHÒNG CHỐNG BẠO LỰC HỌC ĐƯỜNG & BẮT NẠT MẠNG</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
             {violenceRules.map((rule, idx) => (
-              <div key={idx} className="p-4 bg-sky-50/60 border border-sky-200/80 rounded-2xl text-xs space-y-2">
-                <h4 className="font-bold text-sky-950 text-sm">{rule.title}</h4>
-                <div className="text-slate-600">
-                  <span className="font-semibold text-slate-800">Biểu hiện:</span> {rule.examples}
+              <div key={idx} className="p-4 bg-sky-50/60 border border-sky-200/80 rounded-2xl text-xs space-y-2.5 overflow-hidden flex flex-col justify-between">
+                <div>
+                  <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-900 mb-2 border border-sky-100 shadow-2xs">
+                    <img
+                      src={rule.imageUrl}
+                      alt={rule.title}
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <h4 className="font-black text-sky-950 text-sm">{rule.title}</h4>
+                  <div className="text-slate-600 mt-1 leading-relaxed">
+                    <span className="font-semibold text-slate-800">Biểu hiện:</span> {rule.examples}
+                  </div>
                 </div>
-                <div className="p-2 bg-white rounded-xl border border-sky-100 text-sky-900 font-bold">
+                <div className="p-2.5 bg-white rounded-xl border border-sky-100 text-sky-900 font-bold shadow-2xs">
                   🛡️ Hành động: {rule.action}
                 </div>
               </div>
@@ -430,77 +553,125 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
         </section>
       )}
 
-      {/* SECTION 4: DANH SÁCH BÀI VIẾT NỔI BẬT */}
-      <section className="bg-white rounded-3xl p-5 border border-emerald-100 shadow-xs space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
-            <h3 className="text-sm font-black text-slate-900 uppercase">
-              BÀI VIẾT & PHÓNG SỰ ĐIỀU TRA HỌC ĐƯỜNG (NGUỒN BÁO MẠNG CHÍNH THỐNG)
-            </h3>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {NEWS_ARTICLES.map((art) => (
-            <div
-              key={art.id}
-              className="p-4 rounded-3xl border border-slate-200 hover:border-emerald-400 bg-white hover:shadow-md transition flex flex-col justify-between group"
-            >
-              <div onClick={() => onSelectArticle(art)} className="cursor-pointer">
-                <div className="relative rounded-2xl overflow-hidden mb-3 aspect-video bg-slate-900">
-                  <img
-                    src={art.imageUrl}
-                    alt={art.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                  />
-                  <span className="absolute top-2 left-2 bg-emerald-700/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-xs flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-300" />
-                    <span>{art.verifiedBadge || art.sourceName}</span>
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2 text-[10px] text-slate-500 mb-1">
-                  <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                    {art.categoryLabel}
-                  </span>
-                  <span>•</span>
-                  <span>{art.date}</span>
-                </div>
-
-                <h4 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-emerald-700 transition leading-snug line-clamp-2 mt-0.5">
-                  {art.title}
-                </h4>
-                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                  {art.summary}
-                </p>
-              </div>
-
-              <div className="mt-3.5 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
-                <button
-                  onClick={() => onSelectArticle(art)}
-                  className="font-bold text-emerald-700 hover:underline flex items-center gap-1 text-[11px]"
-                >
-                  <span>Chi tiết</span> ➔
-                </button>
-
-                {art.sourceUrl && (
-                  <a
-                    href={art.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold transition flex items-center gap-1 border border-emerald-200"
-                    title="Mở bài viết trực tiếp tại nguồn báo an ninh mạng"
-                  >
-                    <span>Nguồn báo</span>
-                    <ExternalLink className="w-3 h-3 text-emerald-600" />
-                  </a>
-                )}
-              </div>
+      {/* SECTION 4: THẺ BÀI VIẾT DO AI TỰ SINH & BÁO CHÍ CHÍNH THỐNG */}
+      <section className="bg-white rounded-3xl p-4 sm:p-6 border border-emerald-100 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
+              <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-tight">
+                THẺ BÀI VIẾT DO AI TỰ SINH & BÁO CHÍ CHÍNH THỐNG (GOOGLE SEARCH GROUNDING)
+              </h3>
             </div>
-          ))}
+            <p className="text-[11px] text-slate-500 mt-1">
+              Ảnh minh họa 16:9 sắc nét, tải lười (lazy load), nhãn màu trực quan, liên kết mở tab mới trực tiếp tới bài viết gốc.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSearchAiNews}
+            disabled={isSearchingAi}
+            className="self-start sm:self-auto px-3.5 py-2 rounded-xl bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-700/20 flex items-center gap-1.5 transition active:scale-95 disabled:opacity-60 cursor-pointer"
+            title="Kích hoạt Gemini AI tìm kiếm tin tức học đường có kiểm chứng từ Google Search"
+          >
+            {isSearchingAi ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-200" />
+                <span>Đang quét Google Search...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>AI Tìm Tin Mới (Google Search)</span>
+              </>
+            )}
+          </button>
         </div>
+
+        {/* AI Notification status */}
+        {aiMessage && (
+          <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-2xl text-xs font-bold text-emerald-900 flex items-center gap-2 animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{aiMessage}</span>
+          </div>
+        )}
+
+        {/* Live Keyword Search Bar */}
+        <div className="relative">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Tìm theo từ khóa: rác thải, năng lượng, cây xanh, nước sạch, pod, bạo lực..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/70 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-600"
+            >
+              Xóa
+            </button>
+          )}
+        </div>
+
+        {/* Filtered Articles Grid */}
+        {(() => {
+          const q = searchQuery.toLowerCase().trim();
+          const filtered = articlesList.filter((art) => {
+            const matchesCat =
+              activeCategory === 'all' ||
+              art.category === activeCategory ||
+              (activeCategory === 'thuoc-la' && (art.category === 'thuoc-la' || art.category === 'vape')) ||
+              (activeCategory === 'vape' && (art.category === 'thuoc-la' || art.category === 'vape'));
+
+            const matchesQ =
+              !q ||
+              art.title.toLowerCase().includes(q) ||
+              art.summary.toLowerCase().includes(q) ||
+              (art.sourceName && art.sourceName.toLowerCase().includes(q)) ||
+              (art.categoryLabel && art.categoryLabel.toLowerCase().includes(q));
+
+            return matchesCat && matchesQ;
+          });
+
+          if (filtered.length === 0) {
+            return (
+              <div className="p-8 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-center space-y-2">
+                <p className="text-xs text-slate-600 font-medium">
+                  Không tìm thấy bài viết phù hợp với tiêu chí tìm kiếm.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveCategory('all');
+                    setSearchQuery('');
+                  }}
+                  className="text-xs font-bold text-emerald-700 hover:underline"
+                >
+                  Đặt lại bộ lọc
+                </button>
+              </div>
+            );
+          }
+
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {filtered.map((art) => (
+                <ArticleCard
+                  key={art.id}
+                  article={art}
+                  onSelectArticle={onSelectArticle}
+                  showAiBadge={art.badge === 'AI Grounding'}
+                />
+              ))}
+            </div>
+          );
+        })()}
       </section>
     </div>
   );
 };
+

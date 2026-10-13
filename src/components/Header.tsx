@@ -164,8 +164,9 @@ export const Header: React.FC<HeaderProps> = ({
                   className="flex items-center gap-1.5 sm:gap-2 px-2 py-1.5 sm:px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition border border-slate-200 max-w-[125px] sm:max-w-[180px]"
                 >
                   <img
-                    src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}
+                    src={currentUser.avatarUrl || '/images/hero_primary_students.jpg'}
                     alt="Avatar"
+                    referrerPolicy="no-referrer"
                     className="w-5 h-5 rounded-full object-cover shrink-0"
                   />
                   <span className="truncate hidden sm:inline">{currentUser.fullName}</span>

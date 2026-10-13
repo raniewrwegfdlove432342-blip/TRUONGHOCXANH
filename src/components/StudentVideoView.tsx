@@ -688,6 +688,7 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
                         <img
                           src={item.thumbnailUrl}
                           alt={item.title}
+                          referrerPolicy="no-referrer"
                           className="w-full h-full object-cover group-hover/img:scale-105 transition duration-300"
                         />
                         <div className="absolute inset-0 bg-black/30 hover:bg-black/10 flex items-center justify-center transition">
@@ -779,6 +780,7 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
             <img
               src={selectedImagePreview}
               alt="Xem ảnh lớn"
+              referrerPolicy="no-referrer"
               className="max-h-[85vh] w-auto object-contain mx-auto"
             />
           </div>

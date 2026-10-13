@@ -55,6 +55,8 @@ export interface PillarItem {
   colorClass: string;
   bgColorClass: string;
   borderColorClass: string;
+  imageUrl?: string;
+  summary?: string;
   content: {
     tagline: string;
     rules: { title: string; desc: string }[];
@@ -78,7 +80,7 @@ export interface NewsArticle {
   id: string;
   title: string;
   summary: string;
-  category: 'ma-tuy' | 'thuoc-la' | 'bao-luc' | 'ky-nang';
+  category: 'ma-tuy' | 'thuoc-la' | 'vape' | 'bao-luc' | 'ky-nang' | 'rac-thai' | 'nang-luong' | 'cay-xanh' | 'nuoc-sach' | string;
   categoryLabel: string;
   date: string;
   views: string;
@@ -141,6 +143,7 @@ export interface MiniGame {
   badge: string;
   difficulty: 'Dễ' | 'Trung bình' | 'Thử thách';
   themeColor: string;
+  imageUrl?: string;
 }
 
 export interface AnonymousReportSubmission {

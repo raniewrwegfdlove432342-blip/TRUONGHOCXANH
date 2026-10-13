@@ -56,11 +56,6 @@ export const FloatingMascot: React.FC<FloatingMascotProps> = ({ onOpenAi }) => {
         {/* Live Active Pulsing Dot */}
         <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-white shadow-xs z-20 animate-pulse" />
       </button>
-
-      {/* Tiny clean pill badge below button */}
-      <span className="mt-1 px-2 py-0.5 rounded-full bg-emerald-900/90 text-[9px] font-bold text-emerald-100 shadow-md backdrop-blur-xs select-none pointer-events-none">
-        Cố Vấn AI
-      </span>
     </aside>
   );
 };

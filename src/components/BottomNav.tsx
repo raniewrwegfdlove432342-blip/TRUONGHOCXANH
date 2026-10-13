@@ -19,7 +19,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
   const navItems = [
     { id: 'home' as ActiveTab, label: 'Trang chủ', icon: Home },
-    { id: 'knowledge' as ActiveTab, label: 'Báo chí & ATTT', icon: BookOpen },
+    { id: 'knowledge' as ActiveTab, label: 'Báo chí', icon: BookOpen },
     ...(showVideosTab
       ? [{ id: 'student-videos' as ActiveTab, label: 'Video HS', icon: Film }]
       : [{ id: 'quiz' as ActiveTab, label: 'Trắc nghiệm', icon: CheckSquare }]),

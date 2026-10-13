@@ -63,6 +63,8 @@ export const GameArenaView: React.FC = () => {
   const [situationSelectedOpt, setSituationSelectedOpt] = useState<number | null>(null);
   const [situationSubmitted, setSituationSubmitted] = useState(false);
   const [situationScore, setSituationScore] = useState(0);
+  const [situationCompleted, setSituationCompleted] = useState(false);
+  const [wheelRotation, setWheelRotation] = useState(0);
 
   // GAME 4: BUBBLE POP (Bắn bong bóng khói độc Pod Chill)
   interface BubbleItem {
@@ -287,13 +289,17 @@ export const GameArenaView: React.FC = () => {
     setSpinning(true);
     setWheelResult(null);
     soundFx.playClick();
+    const spinDelta = 1440 + Math.floor(Math.random() * 360);
+    const nextRotation = wheelRotation + spinDelta;
+    setWheelRotation(nextRotation);
+
     setTimeout(() => {
       const idx = Math.floor(Math.random() * wheelMissions.length);
       setWheelResult(wheelMissions[idx]);
       setSpinning(false);
       soundFx.playVictory();
       confetti({ particleCount: 120, spread: 70 });
-    }, 1800);
+    }, 2400);
   };
 
   return (
@@ -481,87 +487,120 @@ export const GameArenaView: React.FC = () => {
           {/* GAME 3: SITUATION 5 STAGES */}
           {selectedGameId === 'game-situation' && (
             <div className="space-y-4 max-w-xl mx-auto">
-              <div className="flex items-center justify-between text-xs font-black">
-                <span className="px-3 py-1 bg-amber-100 text-amber-900 rounded-full border border-amber-300">
-                  Ải {situationStageIdx + 1} / {SITUATION_STAGES.length}
-                </span>
-                <span className="text-blue-700">Điểm: {situationScore} điểm</span>
-              </div>
-
-              {SITUATION_STAGES[situationStageIdx] && (
-                <div className="space-y-3.5">
-                  <h3 className="text-base font-black text-slate-900 leading-snug">
-                    {SITUATION_STAGES[situationStageIdx].scenarioTitle}
-                  </h3>
-                  <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-700 leading-relaxed italic">
-                    "{SITUATION_STAGES[situationStageIdx].context}"
+              {situationCompleted ? (
+                <div className="p-6 bg-emerald-50 border border-emerald-300 rounded-3xl text-center space-y-4 animate-in zoom-in-95">
+                  <div className="text-4xl">🏆</div>
+                  <h4 className="text-lg font-black text-emerald-950">
+                    XUẤT SẮC! HOÀN THÀNH 5 ẢI TÌNH HUỐNG THOÁT HIỂM!
+                  </h4>
+                  <p className="text-xs text-slate-700 max-w-md mx-auto leading-relaxed">
+                    Em đã xuất sắc vận dụng <strong>Tứ Bộ Khẩu Quyết</strong> để vượt qua các cạm bẫy học đường với tổng điểm <strong className="text-emerald-700 text-sm">{situationScore} / 500 điểm</strong>!
+                  </p>
+                  <div className="p-3 bg-white/90 rounded-2xl border border-emerald-200 text-xs font-bold text-emerald-900 inline-block">
+                    🎖️ Huy hiệu đạt được: Đại Sứ Bản Lĩnh Thoát Hiểm Lớp 9
+                  </div>
+                  <div className="flex justify-center gap-3 pt-2">
+                    <button
+                      onClick={() => {
+                        setSituationStageIdx(0);
+                        setSituationSelectedOpt(null);
+                        setSituationSubmitted(false);
+                        setSituationScore(0);
+                        setSituationCompleted(false);
+                      }}
+                      className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs transition"
+                    >
+                      Chơi lại từ Ải 1
+                    </button>
+                    <button
+                      onClick={() => setSelectedGameId(null)}
+                      className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition"
+                    >
+                      Về menu 8 trò chơi
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between text-xs font-black">
+                    <span className="px-3 py-1 bg-amber-100 text-amber-900 rounded-full border border-amber-300">
+                      Ải {situationStageIdx + 1} / {SITUATION_STAGES.length}
+                    </span>
+                    <span className="text-blue-700">Điểm: {situationScore} điểm</span>
                   </div>
 
-                  <div className="font-bold text-xs text-slate-800">
-                    {SITUATION_STAGES[situationStageIdx].question}
-                  </div>
-
-                  <div className="space-y-2">
-                    {SITUATION_STAGES[situationStageIdx].options.map((opt, idx) => (
-                      <button
-                        key={idx}
-                        disabled={situationSubmitted}
-                        onClick={() => {
-                          setSituationSelectedOpt(idx);
-                          setSituationSubmitted(true);
-                          if (opt.isSafe) {
-                            soundFx.playCorrect();
-                            setSituationScore((s) => s + 100);
-                          } else {
-                            soundFx.playWrong();
-                          }
-                        }}
-                        className={`w-full p-3 rounded-2xl border text-left text-xs font-bold transition ${
-                          situationSubmitted
-                            ? opt.isSafe
-                              ? 'bg-emerald-50 border-emerald-500 text-emerald-950 font-black ring-2 ring-emerald-300'
-                              : situationSelectedOpt === idx
-                              ? 'bg-rose-50 border-rose-500 text-rose-950'
-                              : 'bg-white border-slate-200 text-slate-400 opacity-60'
-                            : 'bg-white hover:bg-blue-50/50 border-slate-200 hover:border-blue-400 text-slate-800'
-                        }`}
-                      >
-                        <div className="flex items-start gap-2">
-                          <span className="font-black text-blue-600">{opt.label}.</span>
-                          <span>{opt.text}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-
-                  {situationSubmitted && (
-                    <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-2xl text-xs space-y-2 animate-in fade-in">
-                      <div className="font-black text-blue-900">
-                        {SITUATION_STAGES[situationStageIdx].options[situationSelectedOpt || 0]?.feedback}
+                  {SITUATION_STAGES[situationStageIdx] && (
+                    <div className="space-y-3.5">
+                      <h3 className="text-base font-black text-slate-900 leading-snug">
+                        {SITUATION_STAGES[situationStageIdx].scenarioTitle}
+                      </h3>
+                      <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-700 leading-relaxed italic">
+                        "{SITUATION_STAGES[situationStageIdx].context}"
                       </div>
-                      <button
-                        onClick={() => {
-                          if (situationStageIdx < SITUATION_STAGES.length - 1) {
-                            setSituationStageIdx((i) => i + 1);
-                            setSituationSelectedOpt(null);
-                            setSituationSubmitted(false);
-                          } else {
-                            soundFx.playVictory();
-                            confetti({ particleCount: 200, spread: 90 });
-                            alert(`Chúc mừng em đã hoàn thành cả 5 ải tình huống với ${situationScore + (SITUATION_STAGES[situationStageIdx].options[situationSelectedOpt || 0]?.isSafe ? 100 : 0)} điểm!`);
-                            setSituationStageIdx(0);
-                            setSituationSelectedOpt(null);
-                            setSituationSubmitted(false);
-                            setSituationScore(0);
-                          }
-                        }}
-                        className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl text-xs transition"
-                      >
-                        {situationStageIdx < SITUATION_STAGES.length - 1 ? 'Tiếp tục ải sau ➔' : 'Hoàn thành thử thách 🏆'}
-                      </button>
+
+                      <div className="font-bold text-xs text-slate-800">
+                        {SITUATION_STAGES[situationStageIdx].question}
+                      </div>
+
+                      <div className="space-y-2">
+                        {SITUATION_STAGES[situationStageIdx].options.map((opt, idx) => (
+                          <button
+                            key={idx}
+                            disabled={situationSubmitted}
+                            onClick={() => {
+                              setSituationSelectedOpt(idx);
+                              setSituationSubmitted(true);
+                              if (opt.isSafe) {
+                                soundFx.playCorrect();
+                                setSituationScore((s) => s + 100);
+                              } else {
+                                soundFx.playWrong();
+                              }
+                            }}
+                            className={`w-full p-3 rounded-2xl border text-left text-xs font-bold transition ${
+                              situationSubmitted
+                                ? opt.isSafe
+                                  ? 'bg-emerald-50 border-emerald-500 text-emerald-950 font-black ring-2 ring-emerald-300'
+                                  : situationSelectedOpt === idx
+                                  ? 'bg-rose-50 border-rose-500 text-rose-950'
+                                  : 'bg-white border-slate-200 text-slate-400 opacity-60'
+                                : 'bg-white hover:bg-blue-50/50 border-slate-200 hover:border-blue-400 text-slate-800'
+                            }`}
+                          >
+                            <div className="flex items-start gap-2">
+                              <span className="font-black text-blue-600">{opt.label}.</span>
+                              <span>{opt.text}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+
+                      {situationSubmitted && (
+                        <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-2xl text-xs space-y-2 animate-in fade-in">
+                          <div className="font-black text-blue-900">
+                            {SITUATION_STAGES[situationStageIdx].options[situationSelectedOpt || 0]?.feedback}
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (situationStageIdx < SITUATION_STAGES.length - 1) {
+                                setSituationStageIdx((i) => i + 1);
+                                setSituationSelectedOpt(null);
+                                setSituationSubmitted(false);
+                              } else {
+                                soundFx.playVictory();
+                                confetti({ particleCount: 200, spread: 90 });
+                                setSituationCompleted(true);
+                              }
+                            }}
+                            className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl text-xs transition"
+                          >
+                            {situationStageIdx < SITUATION_STAGES.length - 1 ? 'Tiếp tục ải sau ➔' : 'Hoàn thành thử thách 🏆'}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
+                </>
               )}
             </div>
           )}
@@ -814,26 +853,64 @@ export const GameArenaView: React.FC = () => {
                 </p>
               </div>
 
-              <div className="h-44 bg-linear-to-b from-amber-50 to-yellow-100 rounded-3xl border-2 border-dashed border-amber-300 flex items-center justify-center p-4">
-                {spinning ? (
-                  <RotateCw className="w-12 h-12 text-amber-600 animate-spin" />
-                ) : (
-                  <div className="text-4xl animate-pulse">🎡</div>
-                )}
+              {/* Realistic Visual Spinning Wheel */}
+              <div className="relative w-64 h-64 mx-auto my-3 flex items-center justify-center">
+                {/* Pointer at top */}
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[18px] border-t-rose-600 drop-shadow-md" />
+
+                {/* Rotating Wheel Container */}
+                <div
+                  className="w-full h-full rounded-full border-4 border-amber-400 shadow-xl overflow-hidden select-none"
+                  style={{
+                    transform: `rotate(${wheelRotation}deg)`,
+                    transition: spinning ? 'transform 2.4s cubic-bezier(0.15, 0.9, 0.2, 1)' : 'none',
+                  }}
+                >
+                  <svg viewBox="0 0 100 100" className="w-full h-full">
+                    {/* Slice 1 (0 - 60 deg): Emerald */}
+                    <path d="M 50 50 L 50 0 A 50 50 0 0 1 93.3 25 Z" fill="#10b981" />
+                    {/* Slice 2 (60 - 120 deg): Sky */}
+                    <path d="M 50 50 L 93.3 25 A 50 50 0 0 1 93.3 75 Z" fill="#0284c7" />
+                    {/* Slice 3 (120 - 180 deg): Amber */}
+                    <path d="M 50 50 L 93.3 75 A 50 50 0 0 1 50 100 Z" fill="#f59e0b" />
+                    {/* Slice 4 (180 - 240 deg): Teal */}
+                    <path d="M 50 50 L 50 100 A 50 50 0 0 1 6.7 75 Z" fill="#0d9488" />
+                    {/* Slice 5 (240 - 300 deg): Purple */}
+                    <path d="M 50 50 L 6.7 75 A 50 50 0 0 1 6.7 25 Z" fill="#8b5cf6" />
+                    {/* Slice 6 (300 - 360 deg): Rose */}
+                    <path d="M 50 50 L 6.7 25 A 50 50 0 0 1 50 0 Z" fill="#f43f5e" />
+
+                    {/* Slice Text Labels */}
+                    <text x="63" y="24" fill="#ffffff" fontSize="4.5" fontWeight="900" transform="rotate(30, 63, 24)">Tuyên Truyền</text>
+                    <text x="76" y="52" fill="#ffffff" fontSize="4.5" fontWeight="900" transform="rotate(90, 76, 52)">Lưu 111</text>
+                    <text x="63" y="80" fill="#ffffff" fontSize="4.5" fontWeight="900" transform="rotate(150, 63, 80)">Động Viên</text>
+                    <text x="32" y="80" fill="#ffffff" fontSize="4.5" fontWeight="900" transform="rotate(210, 32, 80)">Khẩu Quyết</text>
+                    <text x="18" y="52" fill="#ffffff" fontSize="4.5" fontWeight="900" transform="rotate(270, 18, 52)">Phổi Sạch</text>
+                    <text x="32" y="24" fill="#ffffff" fontSize="4.5" fontWeight="900" transform="rotate(330, 32, 24)">Thể Thao</text>
+                  </svg>
+                </div>
+
+                {/* Center Hub */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-linear-to-br from-amber-300 via-amber-400 to-amber-500 border-2 border-white shadow-lg flex items-center justify-center z-10 text-sm font-black text-amber-950 select-none">
+                  ⭐
+                </div>
               </div>
 
               <button
                 disabled={spinning}
                 onClick={handleSpinWheel}
-                className="w-full py-3.5 bg-linear-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-black rounded-2xl text-sm shadow-md transition disabled:opacity-50"
+                className="w-full py-3.5 bg-linear-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-black rounded-2xl text-sm shadow-md transition disabled:opacity-50 active:scale-98"
               >
-                {spinning ? 'Đang quay...' : 'Quay Nhận Nhiệm Vụ Hôm Nay'}
+                {spinning ? 'Đang quay vòng may mắn...' : 'Quay Nhận Nhiệm Vụ Hôm Nay 🎡'}
               </button>
 
               {wheelResult && (
-                <div className="p-4 bg-amber-50 border border-amber-300 rounded-2xl text-xs text-amber-950 font-bold animate-in fade-in">
-                  ⭐ <strong>Nhiệm vụ của em hôm nay:</strong>
-                  <p className="mt-1 text-sm text-slate-900 font-extrabold">{wheelResult}</p>
+                <div className="p-4 bg-linear-to-br from-amber-50 to-yellow-50 border border-amber-300 rounded-2xl text-xs text-amber-950 font-bold animate-in fade-in shadow-xs text-left space-y-1">
+                  <div className="flex items-center gap-1.5 text-amber-900 font-black">
+                    <Sparkles className="w-4 h-4 text-amber-600" />
+                    <span>Nhiệm vụ mầm xanh của em hôm nay:</span>
+                  </div>
+                  <p className="text-sm text-slate-900 font-extrabold leading-snug pl-5">{wheelResult}</p>
                 </div>
               )}
             </div>
@@ -936,39 +1013,53 @@ export const GameArenaView: React.FC = () => {
         </div>
       ) : (
         /* Grid of 8 Mini Games */
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {MINI_GAMES.map((game) => (
             <div
               key={game.id}
               onClick={() => setSelectedGameId(game.id)}
-              className="p-4 rounded-3xl bg-white border border-slate-200 hover:border-blue-400 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+              className="rounded-3xl bg-white border border-slate-200/90 hover:border-blue-400 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between group overflow-hidden"
             >
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                    {game.badge}
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-semibold">
-                    Độ khó: {game.difficulty}
-                  </span>
+                {/* 16:9 Aspect Ratio Game Preview Image */}
+                <div className="relative aspect-video w-full overflow-hidden bg-slate-900 shadow-xs">
+                  <img
+                    src={game.imageUrl || '/images/learning_games_kids.jpg'}
+                    alt={game.title}
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 flex-wrap">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-600/90 text-white shadow-xs backdrop-blur-xs">
+                      {game.badge}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-black/60 text-white backdrop-blur-xs">
+                      Độ khó: {game.difficulty}
+                    </span>
+                  </div>
                 </div>
 
-                <h3 className="text-sm font-black text-slate-900 group-hover:text-blue-600 transition">
-                  {game.title}
-                </h3>
-                <div className="text-xs font-bold text-slate-500 mt-0.5">
-                  {game.subtitle}
+                <div className="p-4">
+                  <h3 className="text-sm font-black text-slate-900 group-hover:text-blue-600 transition leading-snug">
+                    {game.title}
+                  </h3>
+                  <div className="text-[11px] font-bold text-slate-500 mt-0.5">
+                    {game.subtitle}
+                  </div>
+                  <p className="text-[11px] text-slate-600 mt-2 line-clamp-2 leading-relaxed">
+                    {game.description}
+                  </p>
                 </div>
-                <p className="text-[11px] text-slate-600 mt-1.5 line-clamp-2 leading-relaxed">
-                  {game.description}
-                </p>
               </div>
 
-              <div className="mt-4 pt-2.5 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-xs font-extrabold text-blue-600 group-hover:translate-x-1 transition flex items-center gap-1">
+              <div className="px-4 pb-4 pt-1 flex items-center justify-between border-t border-slate-100">
+                <span className="text-xs font-black text-blue-600 group-hover:translate-x-1 transition flex items-center gap-1">
                   Vào Chơi Ngay <ArrowRight className="w-3.5 h-3.5" />
                 </span>
-                <span className="text-xs">🎮</span>
+                <span className="text-xs px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 font-bold group-hover:bg-blue-600 group-hover:text-white transition">
+                  Bắt đầu ➔
+                </span>
               </div>
             </div>
           ))}

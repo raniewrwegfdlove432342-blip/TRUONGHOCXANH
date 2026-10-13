@@ -30,6 +30,8 @@ import {
 } from 'lucide-react';
 import { ActiveTab, PillarItem, AmbassadorMessage, SituationStage, NewsArticle } from '../types';
 import { PILLARS, INITIAL_AMBASSADORS, SITUATION_STAGES, NEWS_ARTICLES } from '../data/mockData';
+import { ArticleCard } from './ArticleCard';
+import { Check } from 'lucide-react';
 
 interface HomeViewProps {
   setActiveTab: (tab: ActiveTab) => void;
@@ -52,6 +54,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [newMsgName, setNewMsgName] = useState('');
   const [newMsgGrade, setNewMsgGrade] = useState('');
   const [newMsgText, setNewMsgText] = useState('');
+  const [copiedShareLink, setCopiedShareLink] = useState(false);
 
   // Interactive Situation Challenge state right on Home
   const currentStage = SITUATION_STAGES[0]; // Stage 1
@@ -88,8 +91,24 @@ export const HomeView: React.FC<HomeViewProps> = ({
   return (
     <div className="space-y-6 pb-24">
       {/* 1. Distinctive Brand Hero Banner: TRƯỜNG HỌC XANH */}
-      <section className="bg-linear-to-br from-emerald-900 via-teal-900 to-emerald-800 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-lg relative overflow-hidden border border-emerald-700/50">
+      <section className="bg-linear-to-br from-emerald-900 via-teal-900 to-emerald-800 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-lg relative overflow-hidden border border-emerald-700/50">
         <div className="absolute top-0 right-0 translate-x-10 -translate-y-10 w-44 h-44 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
+
+        {/* AI-Generated Elementary School Kids Illustration Banner */}
+        <div className="relative h-44 sm:h-52 w-full rounded-2xl overflow-hidden mb-4 border border-emerald-500/30 shadow-md">
+          <img
+            src="/images/hero_primary_students.jpg"
+            alt="Học sinh tiểu học rạng rỡ chào đón trường học xanh"
+            className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-linear-to-t from-emerald-950/85 via-emerald-950/20 to-transparent flex items-end p-3 sm:p-4">
+            <span className="text-[11px] sm:text-xs font-black text-white bg-emerald-800/80 px-2.5 py-1 rounded-xl backdrop-blur-xs border border-emerald-400/30 shadow-xs flex items-center gap-1.5">
+              <span>🎒</span>
+              <span>Trường Học Xanh Tiểu Học – An Toàn, Khỏe Mạnh & Vui Tươi</span>
+            </span>
+          </div>
+        </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
           <div className="flex items-center gap-2.5 sm:gap-3">
@@ -131,13 +150,21 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 }).catch(() => {});
               } else {
                 navigator.clipboard.writeText(window.location.href);
-                alert('Đã sao chép liên kết phong trào để chia sẻ cho bạn bè!');
+                setCopiedShareLink(true);
+                setTimeout(() => setCopiedShareLink(false), 3000);
               }
             }}
-            className="p-2.5 sm:p-3 bg-white/15 hover:bg-white/25 border border-white/20 text-white rounded-xl sm:rounded-2xl transition shadow-xs shrink-0"
+            className="p-2.5 sm:p-3 bg-white/15 hover:bg-white/25 border border-white/20 text-white rounded-xl sm:rounded-2xl transition shadow-xs shrink-0 flex items-center gap-1 cursor-pointer"
             title="Chia sẻ với bạn bè"
           >
-            <Share2 className="w-4 h-4" />
+            {copiedShareLink ? (
+              <>
+                <Check className="w-4 h-4 text-emerald-300" />
+                <span className="text-[10px] font-bold text-emerald-200">Đã chép link!</span>
+              </>
+            ) : (
+              <Share2 className="w-4 h-4" />
+            )}
           </button>
 
           <button
@@ -164,39 +191,53 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:gap-3">
-          {PILLARS.map((pillar) => {
-            const IconComponent =
-              pillar.iconName === 'Heart'
-                ? Heart
-                : pillar.iconName === 'Sprout'
-                ? Sprout
-                : pillar.iconName === 'Shield'
-                ? Shield
-                : Star;
-
-            return (
-              <div
-                key={pillar.id}
-                onClick={() => onSelectPillar(pillar)}
-                className={`p-3 sm:p-4 rounded-2xl sm:rounded-3xl border ${pillar.borderColorClass} ${pillar.bgColorClass} cursor-pointer transition-all hover:scale-[1.02] active:scale-98 shadow-xs flex flex-col justify-between min-h-[125px] sm:min-h-[145px]`}
-              >
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-white shadow-xs flex items-center justify-center mb-1.5 sm:mb-2 shrink-0">
-                  <IconComponent className={`w-4 h-4 sm:w-5 sm:h-5 ${pillar.colorClass}`} />
-                </div>
-
-                <div>
-                  <h3 className="text-xs sm:text-sm font-black text-slate-900 leading-snug line-clamp-2">
-                    {pillar.title}
-                  </h3>
-                  <div className={`text-[10px] sm:text-[11px] font-bold mt-1 flex items-center gap-1 ${pillar.colorClass}`}>
-                    <span className="truncate">{pillar.subtitle}</span>
-                    <ArrowRight className="w-3 h-3 shrink-0" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+          {PILLARS.map((pillar) => (
+            <div
+              key={pillar.id}
+              onClick={() => onSelectPillar(pillar)}
+              className="rounded-3xl border border-slate-200/90 bg-white hover:border-emerald-500 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between group overflow-hidden"
+            >
+              <div>
+                {/* 16:9 Descriptive Image */}
+                <div className="relative aspect-video w-full overflow-hidden bg-slate-900 shadow-xs">
+                  <img
+                    src={pillar.imageUrl || '/images/hero_primary_students.jpg'}
+                    alt={pillar.title}
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 flex-wrap">
+                    <span className="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-white/95 text-slate-900 shadow-xs backdrop-blur-md border border-slate-200">
+                      {pillar.badge}
+                    </span>
                   </div>
                 </div>
+
+                <div className="p-3.5 sm:p-4">
+                  <h3 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-emerald-700 transition leading-snug">
+                    {pillar.title}
+                  </h3>
+                  <div className={`text-xs font-bold mt-1 ${pillar.colorClass}`}>
+                    {pillar.subtitle}
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-slate-600 mt-1.5 line-clamp-2 leading-relaxed">
+                    {pillar.content.tagline}
+                  </p>
+                </div>
               </div>
-            );
-          })}
+
+              <div className="px-3.5 sm:px-4 pb-3.5 pt-2 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-xs font-black text-emerald-700 group-hover:translate-x-1 transition flex items-center gap-1">
+                  Xem bí kíp rèn luyện <ArrowRight className="w-3.5 h-3.5" />
+                </span>
+                <span className="text-[10px] font-bold text-slate-400">
+                  3 Quy tắc vàng
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -333,73 +374,35 @@ export const HomeView: React.FC<HomeViewProps> = ({
       </section>
 
       {/* 5. Tiếng Nói Báo Chí & An Ninh Mạng Quốc Gia (Nguồn chính thống có thể click mở ra) */}
-      <section className="bg-white rounded-3xl p-5 sm:p-6 border border-emerald-100 shadow-xs space-y-4">
+      <section className="bg-white rounded-3xl p-4 sm:p-6 border border-emerald-100 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
-              <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">
+              <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-tight">
                 TIẾNG NÓI BÁO CHÍ & AN NINH MẠNG CHÍNH THỐNG
               </h3>
             </div>
             <p className="text-[11px] text-slate-500 mt-0.5">
-              Nguồn xác thực từ Báo Nhân Dân, Bộ Công an, Cục An toàn thông tin, Bệnh viện Bạch Mai
+              Nguồn xác thực từ Báo Nhân Dân, Bộ Công an, Bộ GD&ĐT, Bộ TN&MT, Cục An toàn thông tin, Bệnh viện Bạch Mai
             </p>
           </div>
           <button
             onClick={() => setActiveTab('knowledge')}
-            className="text-xs font-bold text-emerald-700 hover:underline"
+            className="text-xs font-bold text-emerald-700 hover:text-emerald-900 hover:underline flex items-center gap-1 shrink-0 ml-2"
           >
-            Xem tất cả ➔
+            <span>Xem tất cả</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="divide-y divide-slate-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {NEWS_ARTICLES.slice(0, 4).map((art) => (
-            <div
+            <ArticleCard
               key={art.id}
-              className="py-3.5 first:pt-0 last:pb-0 flex flex-col sm:flex-row items-start justify-between gap-3 group"
-            >
-              <div
-                onClick={() => onSelectArticle(art)}
-                className="flex items-start gap-3 cursor-pointer flex-1"
-              >
-                <img
-                  src={art.imageUrl}
-                  alt={art.title}
-                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover shrink-0 group-hover:scale-105 transition shadow-xs"
-                />
-                <div>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-400 mb-0.5">
-                    <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                      {art.verifiedBadge || art.sourceName}
-                    </span>
-                    <span>•</span>
-                    <span>{art.date}</span>
-                  </div>
-                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-emerald-700 transition leading-snug line-clamp-2">
-                    {art.title}
-                  </h4>
-                  <p className="text-[11px] text-slate-500 line-clamp-1 mt-1">
-                    {art.summary}
-                  </p>
-                </div>
-              </div>
-
-              {/* Direct clickable source link */}
-              <div className="shrink-0 flex items-center gap-2 w-full sm:w-auto justify-end">
-                <a
-                  href={art.sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-50 text-emerald-800 border border-slate-200 text-xs font-bold transition flex items-center gap-1"
-                  title="Mở bài viết gốc tại trang báo mạng an toàn"
-                >
-                  <span>Mở bài gốc</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-emerald-700" />
-                </a>
-              </div>
-            </div>
+              article={art}
+              onSelectArticle={onSelectArticle}
+            />
           ))}
         </div>
       </section>
