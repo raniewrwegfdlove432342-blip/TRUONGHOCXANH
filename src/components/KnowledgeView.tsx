@@ -74,7 +74,7 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
       reality: 'Chứa ma túy tổng hợp (cần sa tổng hợp ADB-BUTINACA), gây tê liệt ý chí, ảo giác hoang tưởng, loạn thần cấp và đột quỵ tim.',
       alertText: 'Tuyệt đối không hút thử dù chỉ 1 hơi! Rất nhiều học sinh đã phải nhập viện cấp cứu vì co giật.',
       color: 'border-red-400 bg-red-50/50',
-      imageUrl: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=800&auto=format&fit=crop&q=80',
+      imageUrl: '/images/disguise_pod_chill.jpg',
     },
     {
       id: 'nuoc-vui',
@@ -84,7 +84,7 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
       reality: 'Hỗn hợp Ketamine, MDMA (thuốc lắc), Diazepam nghiền nhỏ. Uống vào gây kích thích tim mạch dữ dội, ảo giác bạo lực và suy hô hấp.',
       alertText: 'Chỉ uống nước đóng chai còn nguyên tem niêm phong do tự tay mình mở nắp.',
       color: 'border-amber-400 bg-amber-50/50',
-      imageUrl: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800&auto=format&fit=crop&q=80',
+      imageUrl: '/images/disguise_nuoc_vui.jpg',
     },
     {
       id: 'tem-giay',
@@ -94,7 +94,7 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
       reality: 'Chất kích thích gây ảo thị, hoang tưởng cảm giác mình có thể bay lượn, dẫn đến hành vi tự sát hoặc tấn công người khác.',
       alertText: 'Không bao giờ ngậm hoặc cầm bất kỳ miếng dán lạ nào từ bạn bè hay người lạ.',
       color: 'border-purple-400 bg-purple-50/50',
-      imageUrl: 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=800&auto=format&fit=crop&q=80',
+      imageUrl: '/images/disguise_tem_giay.jpg',
     },
     {
       id: 'banh-luoi',
@@ -104,7 +104,7 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
       reality: 'Tẩm chất cần sa đậm đặc (THC). Sau khi ăn 30-60 phút sẽ bắt đầu gây chóng mặt, tim đập loạn nhịp, mất nhận thức không gian.',
       alertText: 'Chỉ mua đồ ăn vặt có nguồn gốc xuất xứ rõ ràng tại căng tin trường học hoặc siêu thị uy tín.',
       color: 'border-rose-400 bg-rose-50/50',
-      imageUrl: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=800&auto=format&fit=crop&q=80',
+      imageUrl: '/images/disguise_banh_luoi.jpg',
     },
   ];
 
@@ -358,7 +358,7 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
                 <div>
                   <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-900 mb-2 border border-slate-100">
                     <img
-                      src="https://images.unsplash.com/photo-1585336261026-41864a787b28?w=800&auto=format&fit=crop&q=80"
+                      src="/images/pod_dang_but_hoc_tap.jpg"
                       alt="Dạng Đồ Dùng Học Tập"
                       loading="lazy"
                       className="w-full h-full object-cover"
@@ -373,7 +373,7 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
                 <div>
                   <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-900 mb-2 border border-slate-100">
                     <img
-                      src="https://images.unsplash.com/photo-1563245372-f21724e3856d?w=800&auto=format&fit=crop&q=80"
+                      src="/images/pod_dang_do_choi_anime.jpg"
                       alt="Dạng Đồ Chơi / Anime"
                       loading="lazy"
                       className="w-full h-full object-cover"
@@ -388,7 +388,7 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
                 <div>
                   <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-900 mb-2 border border-slate-100">
                     <img
-                      src="https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop&q=80"
+                      src="/images/pod_dang_thiet_bi_cong_nghe.jpg"
                       alt="Dạng Thiết Bị Công Nghệ"
                       loading="lazy"
                       className="w-full h-full object-cover"
@@ -403,7 +403,7 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
                 <div>
                   <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-900 mb-2 border border-slate-100">
                     <img
-                      src="https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=800&auto=format&fit=crop&q=80"
+                      src="/images/pod_tinh_dau_troi_noi.jpg"
                       alt="Tinh Dầu Trôi Nổi"
                       loading="lazy"
                       className="w-full h-full object-cover"

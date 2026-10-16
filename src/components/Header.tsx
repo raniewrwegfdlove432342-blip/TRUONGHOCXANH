@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Shield,
   PhoneCall,
@@ -15,6 +15,12 @@ import {
   Film,
   GraduationCap,
   School,
+  FolderOpen,
+  BookOpen,
+  CheckSquare,
+  Gamepad2,
+  Bot,
+  Home,
 } from 'lucide-react';
 import { ActiveTab, UserAccount } from '../types';
 
@@ -46,8 +52,24 @@ export const Header: React.FC<HeaderProps> = ({
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const showVideoNav = hasVideos || currentUser?.role === 'admin' || activeTab === 'student-videos';
+  // Close user dropdown when clicking outside without blocking any buttons
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setUserDropdownOpen(false);
+      }
+    }
+    if (userDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [userDropdownOpen]);
+
+  const showVideoNav = true; // Always visible so all students and users can watch videos
 
   return (
     <>
@@ -111,7 +133,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Primary Navbar */}
-        <div className="max-w-5xl mx-auto px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2 overflow-hidden">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2 relative">
           {/* Logo & School Branding */}
           <div
             onClick={() => setActiveTab('home')}
@@ -158,20 +180,21 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* User Account Login / Profile */}
             {currentUser ? (
-              <div className="relative">
+              <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="flex items-center gap-1.5 sm:gap-2 px-2 py-1.5 sm:px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition border border-slate-200 max-w-[125px] sm:max-w-[180px]"
+                  className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition border border-slate-200 shadow-2xs active:scale-95"
+                  title="Nhấn để xem menu chức năng tài khoản"
                 >
                   <img
                     src={currentUser.avatarUrl || '/images/hero_primary_students.jpg'}
                     alt="Avatar"
                     referrerPolicy="no-referrer"
-                    className="w-5 h-5 rounded-full object-cover shrink-0"
+                    className="w-5 h-5 rounded-full object-cover shrink-0 ring-1 ring-emerald-500/30"
                   />
-                  <span className="truncate hidden sm:inline">{currentUser.fullName}</span>
+                  <span className="truncate max-w-[80px] sm:max-w-[130px]">{currentUser.fullName}</span>
                   {currentUser.role === 'admin' ? (
-                    <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-md bg-amber-400 text-slate-950 font-black shrink-0">
+                    <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-md bg-amber-400 text-slate-950 font-black shrink-0 shadow-xs">
                       Admin
                     </span>
                   ) : currentUser.role === 'teacher' ? (
@@ -185,59 +208,180 @@ export const Header: React.FC<HeaderProps> = ({
                   )}
                 </button>
 
-                {/* Dropdown Menu */}
+                {/* Dropdown Menu - Full Functional Menu with Direct Access to All Features */}
                 {userDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 p-3 z-50 text-xs space-y-2 animate-in fade-in zoom-in-95">
-                    <div className="border-b border-slate-100 pb-2">
-                      <div className="font-bold text-slate-900">{currentUser.fullName}</div>
-                      <div className="text-[11px] text-slate-500">
+                  <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-200/90 p-3.5 z-50 text-xs space-y-2.5 animate-in fade-in zoom-in-95">
+                    {/* User Profile Info Card */}
+                    <div className="border-b border-slate-100 pb-2.5">
+                      <div className="flex items-center justify-between">
+                        <div className="font-black text-slate-900 text-sm truncate">{currentUser.fullName}</div>
+                        <span className="text-[10px] text-emerald-800 font-bold px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 shrink-0">
+                          {currentUser.role === 'admin'
+                            ? 'Admin Quản Trị'
+                            : currentUser.role === 'teacher'
+                            ? 'Giáo Viên'
+                            : 'Học Sinh'}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 font-medium mt-0.5">
                         {currentUser.school} • {currentUser.gradeClass}
                       </div>
-                      <div className="text-[10px] text-emerald-700 font-bold mt-0.5">
-                        {currentUser.role === 'admin'
-                          ? '🛡️ Quyền: Quản Trị Viên (Admin)'
-                          : currentUser.role === 'teacher'
-                          ? '👨‍🏫 Quyền: Thầy Cô / Giáo Viên (GV)'
-                          : '🎓 Quyền: Học Sinh (HS)'}
+                      <div className="text-[10px] text-slate-400 mt-0.5 truncate">
+                        Tài khoản: {currentUser.username}
                       </div>
                     </div>
 
-                    {currentUser.role === 'admin' && (
+                    {/* Danh sách ĐẦY ĐỦ các nút chức năng để không bao giờ bị ẩn */}
+                    <div className="space-y-1 max-h-72 overflow-y-auto pr-0.5">
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 pt-1 pb-0.5">
+                        Menu chức năng ứng dụng
+                      </div>
+
                       <button
                         onClick={() => {
                           setUserDropdownOpen(false);
-                          onOpenGoogleSheetSync();
+                          setActiveTab('home');
                         }}
-                        className="w-full text-left p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-800 font-bold flex items-center gap-1.5"
+                        className={`w-full text-left p-2 rounded-xl font-bold flex items-center gap-2 transition ${
+                          activeTab === 'home' ? 'bg-emerald-100 text-emerald-900' : 'hover:bg-slate-50 text-slate-700'
+                        }`}
                       >
-                        <FileSpreadsheet className="w-3.5 h-3.5" />
-                        <span>Xem Bảng Google Sheet</span>
+                        <Home className="w-4 h-4 text-emerald-700 shrink-0" />
+                        <span>Trang Chủ Trường Học Xanh</span>
                       </button>
-                    )}
 
-                    {showVideoNav && (
                       <button
                         onClick={() => {
                           setUserDropdownOpen(false);
                           setActiveTab('student-videos');
                         }}
-                        className="w-full text-left p-1.5 rounded-lg hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-1.5"
+                        className={`w-full text-left p-2 rounded-xl font-bold flex items-center gap-2 transition ${
+                          activeTab === 'student-videos' ? 'bg-teal-100 text-teal-900' : 'hover:bg-teal-50 text-teal-900'
+                        }`}
                       >
-                        <Film className="w-3.5 h-3.5" />
-                        <span>Góc Video Của Học Sinh</span>
+                        <Film className="w-4 h-4 text-teal-600 shrink-0" />
+                        <span>Video Học Sinh & GD (Tất Cả Xem Được)</span>
                       </button>
-                    )}
 
-                    <button
-                      onClick={() => {
-                        setUserDropdownOpen(false);
-                        onLogout();
-                      }}
-                      className="w-full text-left p-1.5 rounded-lg hover:bg-red-50 text-red-600 font-bold flex items-center gap-1.5 border-t border-slate-100 pt-2"
-                    >
-                      <LogOut className="w-3.5 h-3.5" />
-                      <span>Đăng xuất</span>
-                    </button>
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          setActiveTab('report');
+                        }}
+                        className={`w-full text-left p-2 rounded-xl font-bold flex items-center gap-2 transition ${
+                          activeTab === 'report' ? 'bg-rose-100 text-rose-900' : 'hover:bg-rose-50 text-rose-900'
+                        }`}
+                      >
+                        <Shield className="w-4 h-4 text-rose-600 shrink-0" />
+                        <span>Cổng Báo Cáo Sự Việc (Ẩn Danh)</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          setActiveTab('knowledge');
+                        }}
+                        className={`w-full text-left p-2 rounded-xl font-bold flex items-center gap-2 transition ${
+                          activeTab === 'knowledge' ? 'bg-blue-100 text-blue-900' : 'hover:bg-blue-50 text-blue-900'
+                        }`}
+                      >
+                        <BookOpen className="w-4 h-4 text-blue-600 shrink-0" />
+                        <span>Báo Chí, Y Tế & An Ninh Mạng</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          setActiveTab('quiz');
+                        }}
+                        className={`w-full text-left p-2 rounded-xl font-bold flex items-center gap-2 transition ${
+                          activeTab === 'quiz' ? 'bg-emerald-100 text-emerald-900' : 'hover:bg-slate-50 text-slate-700'
+                        }`}
+                      >
+                        <CheckSquare className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>Trắc Nghiệm Kiến Thức 10 Câu</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          setActiveTab('games');
+                        }}
+                        className={`w-full text-left p-2 rounded-xl font-bold flex items-center gap-2 transition ${
+                          activeTab === 'games' ? 'bg-purple-100 text-purple-900' : 'hover:bg-purple-50 text-purple-900'
+                        }`}
+                      >
+                        <Gamepad2 className="w-4 h-4 text-purple-600 shrink-0" />
+                        <span>8 Trò Chơi Giáo Dục An Toàn</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          setActiveTab('ai');
+                        }}
+                        className={`w-full text-left p-2 rounded-xl font-bold flex items-center gap-2 transition ${
+                          activeTab === 'ai' ? 'bg-amber-100 text-amber-900' : 'hover:bg-amber-50 text-amber-900'
+                        }`}
+                      >
+                        <Bot className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span>Cố Vấn AI Học Đường 24/7</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          onOpenCommitment();
+                        }}
+                        className="w-full text-left p-2 rounded-xl hover:bg-emerald-50 text-emerald-800 font-bold flex items-center gap-2 transition"
+                      >
+                        <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+                        <span>Ký Cam Kết Trường Học Xanh</span>
+                      </button>
+
+                      {/* Quản trị viên Admin */}
+                      {currentUser.role === 'admin' && (
+                        <div className="pt-1.5 border-t border-slate-100 space-y-1">
+                          <div className="text-[10px] font-bold text-amber-800 uppercase tracking-wider px-2">
+                            Quyền Quản Trị Viên (Admin)
+                          </div>
+                          <button
+                            onClick={() => {
+                              setUserDropdownOpen(false);
+                              onOpenGoogleSheetSync();
+                            }}
+                            className="w-full text-left p-2 rounded-xl hover:bg-amber-50 text-amber-950 font-bold flex items-center gap-2 transition"
+                          >
+                            <FileSpreadsheet className="w-4 h-4 text-amber-600 shrink-0" />
+                            <span>Quản Trị Google Sheet Dữ Liệu</span>
+                          </button>
+
+                          <a
+                            href="https://drive.google.com/drive/folders/1ijceyQzDFP0W4ZO3XSpt0GYNUtJN59CS?usp=sharing"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setUserDropdownOpen(false)}
+                            className="w-full text-left p-2 rounded-xl hover:bg-amber-50 text-amber-950 font-bold flex items-center gap-2 transition"
+                          >
+                            <FolderOpen className="w-4 h-4 text-amber-600 shrink-0" />
+                            <span>Thư Mục Google Drive Trường</span>
+                          </a>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="border-t border-slate-100 pt-2">
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          onLogout();
+                        }}
+                        className="w-full text-left p-2 rounded-xl hover:bg-red-50 text-red-600 font-bold flex items-center gap-2 transition"
+                      >
+                        <LogOut className="w-4 h-4 shrink-0" />
+                        <span>Đăng xuất tài khoản</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

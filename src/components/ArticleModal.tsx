@@ -14,14 +14,18 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
   onClose,
   onOpenReport,
 }) => {
-  if (!article) return null;
-
-  const fallback = getThemeFallbackImage(article.category, article.title);
-  const [modalImg, setModalImg] = useState<string>(article.imageUrl || fallback);
+  const fallback = article
+    ? getThemeFallbackImage(article.category, article.title)
+    : THEME_FALLBACK_IMAGES.default;
+  const [modalImg, setModalImg] = useState<string>(article?.imageUrl || fallback);
 
   useEffect(() => {
-    setModalImg(article.imageUrl || fallback);
-  }, [article.imageUrl, fallback]);
+    if (article) {
+      setModalImg(article.imageUrl || fallback);
+    }
+  }, [article?.imageUrl, article?.category, article?.title, fallback]);
+
+  if (!article) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">

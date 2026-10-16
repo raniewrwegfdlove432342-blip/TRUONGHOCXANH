@@ -15,14 +15,10 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   hasVideos = false,
   isAdmin = false,
 }) => {
-  const showVideosTab = hasVideos || isAdmin || activeTab === 'student-videos';
-
   const navItems = [
     { id: 'home' as ActiveTab, label: 'Trang chủ', icon: Home },
-    { id: 'knowledge' as ActiveTab, label: 'Báo chí', icon: BookOpen },
-    ...(showVideosTab
-      ? [{ id: 'student-videos' as ActiveTab, label: 'Video HS', icon: Film }]
-      : [{ id: 'quiz' as ActiveTab, label: 'Trắc nghiệm', icon: CheckSquare }]),
+    { id: 'student-videos' as ActiveTab, label: 'Video HS', icon: Film },
+    { id: 'quiz' as ActiveTab, label: 'Trắc nghiệm', icon: CheckSquare },
     { id: 'games' as ActiveTab, label: 'Trò chơi', icon: Gamepad2 },
     { id: 'report' as ActiveTab, label: 'Báo cáo', icon: AlertTriangle },
   ];

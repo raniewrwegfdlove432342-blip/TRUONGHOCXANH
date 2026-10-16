@@ -114,6 +114,10 @@ export interface StudentVideo {
   status: 'approved' | 'pending';
   uploadedAt: string;
   syncedToGoogleSheet?: boolean;
+  isEducationalAdminVideo?: boolean;
+  youtubeId?: string;
+  embedUrl?: string;
+  pinned?: boolean;
 }
 
 // Ensure storage directories exist
@@ -619,6 +623,95 @@ app.post('/api/student-videos/upload', async (req, res) => {
   });
 });
 
+// Batch Upload multiple educational videos for Admin
+app.post('/api/student-videos/upload-batch', async (req, res) => {
+  const { videos } = req.body;
+  if (!Array.isArray(videos) || videos.length === 0) {
+    return res.status(400).json({ error: 'Danh sách video không hợp lệ hoặc đang trống.' });
+  }
+
+  const addedVideos: StudentVideo[] = [];
+
+  for (let i = 0; i < videos.length; i++) {
+    const item = videos[i];
+    if (!item.title) continue;
+
+    let finalMediaUrl = item.videoUrl || item.thumbnailUrl || '';
+    let finalDriveUrl = item.driveUrl || `https://drive.google.com/drive/folders/${GOOGLE_DRIVE_FOLDER_ID}?usp=sharing`;
+
+    if (item.fileBase64 && typeof item.fileBase64 === 'string') {
+      try {
+        const cleanBase64 = item.fileBase64.replace(/^data:.*,/, '');
+        const buffer = Buffer.from(cleanBase64, 'base64');
+        const ext = item.mimeType?.includes('png')
+          ? '.png'
+          : item.mimeType?.includes('jpeg') || item.mimeType?.includes('jpg')
+          ? '.jpg'
+          : item.fileType === 'image'
+          ? '.jpg'
+          : '.mp4';
+        const safeName = `video-admin-${Date.now()}-${i}${ext}`;
+        const filePath = path.join(UPLOADS_DIR, safeName);
+        fs.writeFileSync(filePath, buffer);
+        finalMediaUrl = `/uploads/${safeName}`;
+      } catch (e) {
+        console.error('Error saving batch video locally:', e);
+      }
+    }
+
+    const newVid: StudentVideo = {
+      id: `vid-admin-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
+      title: item.title.trim(),
+      authorName: item.authorName?.trim() || 'Ban Giám Hiệu - Nhà Trường',
+      studentGrade: item.studentGrade?.trim() || 'Tuyên Truyền Học Đường',
+      school: item.school?.trim() || 'Trường Học Thân Yêu',
+      category: item.category || 'drugs',
+      categoryLabel: item.categoryLabel || 'Video Giáo Dục Tuyên Truyền',
+      videoUrl: item.fileType === 'image' ? undefined : (finalMediaUrl || item.videoUrl || item.driveUrl),
+      driveUrl: finalDriveUrl,
+      fileType: item.fileType === 'image' ? 'image' : 'video',
+      thumbnailUrl: item.thumbnailUrl || (item.fileType === 'image' ? finalMediaUrl : undefined),
+      embedUrl: item.embedUrl,
+      youtubeId: item.youtubeId,
+      description: item.description?.trim() || 'Video giáo dục chính thống tuyên truyền phòng chống tệ nạn học đường.',
+      duration: item.duration || (item.fileType === 'image' ? 'Hình ảnh / Áp phích' : 'Video bài giảng'),
+      likes: Number(item.likes) || 15,
+      views: Number(item.views) || 48,
+      status: 'approved',
+      uploadedAt: new Date().toISOString(),
+      isEducationalAdminVideo: true,
+      pinned: true,
+      syncedToGoogleSheet: true,
+    };
+
+    studentVideosDB.unshift(newVid);
+    addedVideos.push(newVid);
+
+    // Sync to Google Sheets
+    syncToGoogleSheets('addVideo', {
+      id: newVid.id,
+      title: newVid.title,
+      authorName: newVid.authorName,
+      grade: newVid.studentGrade,
+      school: newVid.school,
+      category: newVid.categoryLabel,
+      driveUrl: newVid.driveUrl,
+      fileType: newVid.fileType,
+      duration: newVid.duration,
+      uploadedAt: newVid.uploadedAt,
+    });
+  }
+
+  saveLocalDB();
+
+  res.status(201).json({
+    success: true,
+    count: addedVideos.length,
+    videos: addedVideos,
+    message: `Đã gửi lên thành công ${addedVideos.length} video giáo dục vào hệ thống!`,
+  });
+});
+
 app.post('/api/student-videos/:id/like', (req, res) => {
   const { id } = req.params;
   const vid = studentVideosDB.find((v) => v.id === id);
@@ -628,8 +721,46 @@ app.post('/api/student-videos/:id/like', (req, res) => {
   res.json({ success: true, likes: vid.likes });
 });
 
+app.put('/api/student-videos/:id', (req, res) => {
+  const { id } = req.params;
+  const { title, category, categoryLabel, description, currentUserFullName, isAdmin } = req.body;
+  const vidIndex = studentVideosDB.findIndex((v) => v.id === id);
+  if (vidIndex === -1) return res.status(404).json({ error: 'Không tìm thấy video.' });
+
+  const existingVid = studentVideosDB[vidIndex];
+
+  // Chặn học sinh sửa video của người khác: Chỉ Admin hoặc tác giả mới có quyền sửa
+  const isOwner = currentUserFullName && existingVid.authorName === currentUserFullName;
+  if (!isAdmin && !isOwner) {
+    return res.status(403).json({ error: 'Bạn không có quyền chỉnh sửa tác phẩm của người khác!' });
+  }
+
+  studentVideosDB[vidIndex] = {
+    ...existingVid,
+    title: title?.trim() || existingVid.title,
+    category: category || existingVid.category,
+    categoryLabel: categoryLabel || existingVid.categoryLabel,
+    description: description !== undefined ? description.trim() : existingVid.description,
+  };
+
+  saveLocalDB();
+  res.json({ success: true, video: studentVideosDB[vidIndex] });
+});
+
 app.delete('/api/student-videos/:id', (req, res) => {
   const { id } = req.params;
+  const { currentUserFullName, isAdmin } = req.body || {};
+  const vid = studentVideosDB.find((v) => v.id === id);
+  if (!vid) return res.status(404).json({ error: 'Không tìm thấy video.' });
+
+  // Chặn học sinh xóa video của người khác: Chỉ Admin hoặc tác giả mới có quyền xóa
+  if (currentUserFullName !== undefined) {
+    const isOwner = vid.authorName === currentUserFullName;
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ error: 'Bạn không có quyền xóa tác phẩm của người khác!' });
+    }
+  }
+
   studentVideosDB = studentVideosDB.filter((v) => v.id !== id);
   saveLocalDB();
   syncToGoogleSheets('deleteVideo', { id });

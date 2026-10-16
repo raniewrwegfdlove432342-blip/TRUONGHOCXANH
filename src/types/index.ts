@@ -31,6 +31,10 @@ export interface StudentVideo {
   status: 'approved' | 'pending';
   uploadedAt: string;
   syncedToGoogleSheet?: boolean;
+  isEducationalAdminVideo?: boolean;
+  youtubeId?: string;
+  embedUrl?: string;
+  pinned?: boolean;
 }
 
 export interface GoogleSheetSyncStatus {

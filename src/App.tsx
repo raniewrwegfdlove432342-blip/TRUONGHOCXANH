@@ -120,7 +120,7 @@ export default function App() {
             {[
               { id: 'home' as ActiveTab, label: 'Trang chủ' },
               { id: 'knowledge' as ActiveTab, label: 'Báo chí & ATTT' },
-              ...(showVideoTab ? [{ id: 'student-videos' as ActiveTab, label: 'Video HS sáng tạo' }] : []),
+              { id: 'student-videos' as ActiveTab, label: 'Video Học Sinh & GD' },
               { id: 'quiz' as ActiveTab, label: 'Trắc nghiệm 10 câu' },
               { id: 'games' as ActiveTab, label: '8 Trò chơi' },
               { id: 'ai' as ActiveTab, label: 'Cố vấn AI học đường' },
@@ -232,18 +232,22 @@ export default function App() {
       />
 
       {/* Pillar Detail Modal */}
-      <PillarDetailModal
-        pillar={selectedPillar}
-        onClose={() => setSelectedPillar(null)}
-        onNavigateToGames={() => setActiveTab('games')}
-      />
+      {selectedPillar && (
+        <PillarDetailModal
+          pillar={selectedPillar}
+          onClose={() => setSelectedPillar(null)}
+          onNavigateToGames={() => setActiveTab('games')}
+        />
+      )}
 
       {/* Article Reader Modal */}
-      <ArticleModal
-        article={selectedArticle}
-        onClose={() => setSelectedArticle(null)}
-        onOpenReport={() => setActiveTab('report')}
-      />
+      {selectedArticle && (
+        <ArticleModal
+          article={selectedArticle}
+          onClose={() => setSelectedArticle(null)}
+          onOpenReport={() => setActiveTab('report')}
+        />
+      )}
 
       {/* Auth Modal (Login / Register for Teachers & Students) */}
       <AuthModal

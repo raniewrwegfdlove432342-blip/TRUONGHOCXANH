@@ -12,15 +12,15 @@ export const THEME_FALLBACK_IMAGES = {
   'cay-xanh': '/images/eco_garden_kids.jpg',
   // Nước sạch & Vệ sinh môi trường
   'nuoc-sach': '/images/healthy_lifestyle_kids.jpg',
-  // Sức khỏe học đường & Đẩy lùi khói thuốc
-  'thuoc-la': '/images/healthy_lifestyle_kids.jpg',
-  // Tri thức học đường & Vui chơi an toàn
-  'ma-tuy': '/images/learning_games_kids.jpg',
-  // Tình bạn đẹp & Phòng chống bạo lực học đường
-  'bao-luc': '/images/safety_shield_kids.jpg',
+  // Sức khỏe học đường & Đẩy lùi khói thuốc, phòng chống thuốc lá học đường
+  'thuoc-la': '/images/no_tobacco_school_kids.jpg',
+  // Nhận diện ma túy ngụy trang, nước giải khát & thực phẩm chức năng lạ
+  'ma-tuy': '/images/canh_bao_ma_tuy_nup_bong.jpg',
+  // Tình bạn đẹp & Phòng chống bạo lực học đường, bắt nạt trực tuyến
+  'bao-luc': '/images/unicef_bat_nat_truc_tuyen.jpg',
   // Kỹ năng sống & Tự bảo vệ bản thân
-  'ky-nang': '/images/safety_shield_kids.jpg',
-  // Mặc định: Nụ cười học sinh tiểu học dưới mái trường xanh
+  'ky-nang': '/images/unicef_bat_nat_truc_tuyen.jpg',
+  // Mặc định: Nụ cười học sinh tiểu học Việt Nam dưới mái trường xanh
   'default': '/images/hero_primary_students.jpg',
 };
 
@@ -64,22 +64,31 @@ export function getThemeFallbackImage(category?: string, title?: string): string
     return THEME_FALLBACK_IMAGES['cay-xanh'];
   }
   if (
-    text.includes('nước') ||
+    text.includes('ma túy') ||
+    text.includes('nước vui') ||
+    text.includes('núp bóng') ||
+    text.includes('thực phẩm chức năng') ||
+    text.includes('nước giải khát') ||
+    text.includes('chất cấm') ||
+    text.includes('cỏ mỹ') ||
+    text.includes('ketamine')
+  ) {
+    return THEME_FALLBACK_IMAGES['ma-tuy'];
+  }
+  if (text.includes('pod') || text.includes('vape') || text.includes('thuốc lá') || text.includes('khói') || text.includes('nicotine')) {
+    return THEME_FALLBACK_IMAGES['thuoc-la'];
+  }
+  if (
     text.includes('nước sạch') ||
-    text.includes('uống') ||
-    text.includes('vệ sinh') ||
+    text.includes('nước sinh hoạt') ||
+    text.includes('tiết kiệm nước') ||
+    text.includes('vệ sinh môi trường') ||
     text.includes('thủy') ||
     text.includes('water')
   ) {
     return THEME_FALLBACK_IMAGES['nuoc-sach'];
   }
-  if (text.includes('pod') || text.includes('vape') || text.includes('thuốc lá') || text.includes('khói') || text.includes('nicotine')) {
-    return THEME_FALLBACK_IMAGES['thuoc-la'];
-  }
-  if (text.includes('ma túy') || text.includes('nước vui') || text.includes('chất cấm') || text.includes('cỏ mỹ')) {
-    return THEME_FALLBACK_IMAGES['ma-tuy'];
-  }
-  if (text.includes('bạo lực') || text.includes('bắt nạt') || text.includes('mạng') || text.includes('cyber') || text.includes('111')) {
+  if (text.includes('bạo lực') || text.includes('bắt nạt') || text.includes('mạng') || text.includes('cyber') || text.includes('unicef') || text.includes('111')) {
     return THEME_FALLBACK_IMAGES['bao-luc'];
   }
 
