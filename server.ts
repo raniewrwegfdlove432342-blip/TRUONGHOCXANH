@@ -24,8 +24,8 @@ try {
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: '200mb' }));
+app.use(express.urlencoded({ extended: true, limit: '200mb' }));
 
 // Enable CORS for all routes (ensures seamless operation across deployed domains and devices)
 app.use((req, res, next) => {
@@ -180,6 +180,8 @@ const googleSheetsConfig: GoogleSheetsConfig = {
   autoSync: true,
 };
 
+let deletedVideoIds = new Set<string>();
+
 // Save server DB to disk so data is never lost across server restarts or reloads
 function saveLocalDB() {
   try {
@@ -187,6 +189,7 @@ function saveLocalDB() {
       reports: reportsDB,
       users: usersDB,
       videos: studentVideosDB,
+      deletedVideoIds: Array.from(deletedVideoIds),
       pledgeCount,
       lastSavedAt: new Date().toISOString(),
     };
@@ -209,7 +212,12 @@ function loadLocalDB() {
           usersDB.unshift(defaultAdminUser);
         }
       }
-      if (Array.isArray(parsed.videos)) studentVideosDB = parsed.videos;
+      if (Array.isArray(parsed.deletedVideoIds)) {
+        deletedVideoIds = new Set(parsed.deletedVideoIds);
+      }
+      if (Array.isArray(parsed.videos)) {
+        studentVideosDB = parsed.videos.filter((v: StudentVideo) => !deletedVideoIds.has(v.id));
+      }
       if (typeof parsed.pledgeCount === 'number') pledgeCount = parsed.pledgeCount;
     } else {
       saveLocalDB();
@@ -298,7 +306,26 @@ async function fetchFromGoogleSheets() {
         usersDB = mergedUsers;
       }
       if (Array.isArray(data.videos)) {
-        studentVideosDB = data.videos;
+        const mergedVideos: StudentVideo[] = [];
+        const seenIds = new Set<string>();
+
+        // 1. Giữ lại các video từ Google Sheets chưa bị xóa
+        for (const sheetVid of data.videos) {
+          if (sheetVid && sheetVid.id && !deletedVideoIds.has(sheetVid.id)) {
+            mergedVideos.push(sheetVid);
+            seenIds.add(sheetVid.id);
+          }
+        }
+
+        // 2. Bảo toàn tất cả các video vừa được tải lên trên máy chủ mà chưa kịp ghi vào Google Sheets
+        for (const localVid of studentVideosDB) {
+          if (localVid && localVid.id && !deletedVideoIds.has(localVid.id) && !seenIds.has(localVid.id)) {
+            mergedVideos.push(localVid);
+            seenIds.add(localVid.id);
+          }
+        }
+
+        studentVideosDB = mergedVideos;
       }
       if (Array.isArray(data.commitments)) {
         pledgeCount = data.commitments.length;
@@ -517,7 +544,7 @@ app.post('/api/student-videos/upload', async (req, res) => {
     return res.status(400).json({ error: 'Vui lòng cung cấp tiêu đề và tệp video/ảnh để tải lên.' });
   }
 
-  let finalDriveUrl = driveUrl || '';
+  let finalDriveUrl = driveUrl || `https://drive.google.com/drive/folders/${GOOGLE_DRIVE_FOLDER_ID}?usp=sharing`;
   let finalMediaUrl = videoUrl || thumbnailUrl || '';
 
   // 1. If base64 file data is sent, save locally in public/uploads for instant fast viewing
@@ -539,40 +566,6 @@ app.post('/api/student-videos/upload', async (req, res) => {
     } catch (writeErr) {
       console.error('Error saving uploaded file locally:', writeErr);
     }
-
-    // 2. Upload to Google Drive via Google Apps Script Webhook
-    try {
-      const driveUploadRes = await fetch(googleSheetsConfig.webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'uploadToDrive',
-          folderId: GOOGLE_DRIVE_FOLDER_ID,
-          fileName: fileName || `${Date.now()}_${title}.${fileType === 'image' ? 'jpg' : 'mp4'}`,
-          mimeType: mimeType || (fileType === 'image' ? 'image/jpeg' : 'video/mp4'),
-          fileBase64: fileBase64,
-          metadata: {
-            title: title.trim(),
-            authorName: authorName?.trim() || 'Học sinh',
-            studentGrade: studentGrade?.trim() || 'Khối THCS / THPT',
-            school: school?.trim() || 'Trường học thân yêu',
-            categoryLabel: categoryLabel || 'Phòng chống tệ nạn học đường',
-            fileType: fileType === 'image' ? 'image' : 'video',
-          },
-        }),
-      });
-
-      const driveUploadData: any = await driveUploadRes.json().catch(() => null);
-      if (driveUploadData && driveUploadData.fileUrl) {
-        finalDriveUrl = driveUploadData.fileUrl;
-      }
-    } catch (driveErr) {
-      console.error('Drive upload sync attempt failed:', driveErr);
-    }
-  }
-
-  if (!finalDriveUrl) {
-    finalDriveUrl = `https://drive.google.com/drive/folders/${GOOGLE_DRIVE_FOLDER_ID}?usp=sharing`;
   }
 
   const newVideo: StudentVideo = {
@@ -591,7 +584,7 @@ app.post('/api/student-videos/upload', async (req, res) => {
         ? finalMediaUrl
         : 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=600&auto=format&fit=crop&q=80',
     description: description?.trim() || 'Tác phẩm truyền thông do học sinh sáng tạo và nộp vào hệ thống.',
-    duration: duration || (fileType === 'image' ? 'Hình ảnh / Áp phích' : '02:30'),
+    duration: duration || (fileType === 'image' ? 'Hình ảnh / Áp phích' : 'Video clip'),
     likes: 1,
     views: 1,
     status: 'approved',
@@ -599,28 +592,82 @@ app.post('/api/student-videos/upload', async (req, res) => {
     syncedToGoogleSheet: true,
   };
 
+  // Lưu ngay vào cơ sở dữ liệu máy chủ để học sinh và mọi thiết bị khác truy cập được ngay lập tức
   studentVideosDB.unshift(newVideo);
   saveLocalDB();
 
-  // Sync to Google Sheets
-  syncToGoogleSheets('addVideo', {
-    id: newVideo.id,
-    title: newVideo.title,
-    authorName: newVideo.authorName,
-    grade: newVideo.studentGrade,
-    school: newVideo.school,
-    category: newVideo.categoryLabel,
-    driveUrl: newVideo.driveUrl,
-    fileType: newVideo.fileType,
-    duration: newVideo.duration,
-    uploadedAt: newVideo.uploadedAt,
-  });
-
+  // Trả về kết quả ngay cho client trong vòng vài mili-giây
   res.status(201).json({
     success: true,
     video: newVideo,
     message: 'Tác phẩm đã được nộp và tải lên thư mục Google Drive của trường thành công!',
   });
+
+  // Đồng bộ nền lên Google Sheets và Google Drive (Asynchronous background task)
+  (async () => {
+    try {
+      // 1. Ghi bản ghi vào Google Sheet
+      syncToGoogleSheets('addVideo', {
+        id: newVideo.id,
+        title: newVideo.title,
+        authorName: newVideo.authorName,
+        grade: newVideo.studentGrade,
+        school: newVideo.school,
+        category: newVideo.categoryLabel,
+        driveUrl: newVideo.driveUrl,
+        fileType: newVideo.fileType,
+        duration: newVideo.duration,
+        uploadedAt: newVideo.uploadedAt,
+      });
+
+      // 2. Tải tệp lên Google Drive
+      if (fileBase64 && typeof fileBase64 === 'string') {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000);
+        const driveUploadRes = await fetch(googleSheetsConfig.webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          redirect: 'follow',
+          signal: controller.signal,
+          body: JSON.stringify({
+            action: 'uploadToDrive',
+            folderId: GOOGLE_DRIVE_FOLDER_ID,
+            fileName: fileName || `${Date.now()}_${title}.${fileType === 'image' ? 'jpg' : 'mp4'}`,
+            mimeType: mimeType || (fileType === 'image' ? 'image/jpeg' : 'video/mp4'),
+            fileBase64: fileBase64,
+            metadata: {
+              id: newVideo.id,
+              title: newVideo.title,
+              authorName: newVideo.authorName,
+              studentGrade: newVideo.studentGrade,
+              school: newVideo.school,
+              categoryLabel: newVideo.categoryLabel,
+              fileType: newVideo.fileType,
+              driveUrl: newVideo.driveUrl,
+              duration: newVideo.duration,
+            },
+          }),
+        }).catch(() => null);
+        clearTimeout(timeoutId);
+
+        if (driveUploadRes && driveUploadRes.ok) {
+          const driveData: any = await driveUploadRes.json().catch(() => null);
+          if (driveData && driveData.fileUrl) {
+            newVideo.driveUrl = driveData.fileUrl;
+            if (newVideo.fileType === 'image') {
+              const fMatch = driveData.fileUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+              if (fMatch && fMatch[1]) {
+                newVideo.thumbnailUrl = `https://drive.google.com/thumbnail?id=${fMatch[1]}&sz=w1200`;
+              }
+            }
+            saveLocalDB();
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Background Drive/Sheets sync completed with notice:', e);
+    }
+  })();
 });
 
 // Batch Upload multiple educational videos for Admin
@@ -654,6 +701,29 @@ app.post('/api/student-videos/upload-batch', async (req, res) => {
         const filePath = path.join(UPLOADS_DIR, safeName);
         fs.writeFileSync(filePath, buffer);
         finalMediaUrl = `/uploads/${safeName}`;
+
+        // Đồng bộ tệp lên Google Drive trường
+        try {
+          fetch(googleSheetsConfig.webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'uploadToDrive',
+              folderId: GOOGLE_DRIVE_FOLDER_ID,
+              fileName: item.fileName || `${Date.now()}_${item.title}.${ext.replace('.', '')}`,
+              mimeType: item.mimeType || (item.fileType === 'image' ? 'image/jpeg' : 'video/mp4'),
+              fileBase64: item.fileBase64,
+              metadata: {
+                title: item.title.trim(),
+                authorName: item.authorName?.trim() || 'Ban Giám Hiệu',
+                studentGrade: item.studentGrade?.trim() || 'Tuyên Truyền Học Đường',
+                school: item.school?.trim() || 'Trường Học Xanh',
+                categoryLabel: item.categoryLabel || 'Video Giáo Dục Tuyên Truyền',
+                fileType: item.fileType === 'image' ? 'image' : 'video',
+              },
+            }),
+          }).catch(() => {});
+        } catch (driveErr) {}
       } catch (e) {
         console.error('Error saving batch video locally:', e);
       }
@@ -749,21 +819,38 @@ app.put('/api/student-videos/:id', (req, res) => {
 
 app.delete('/api/student-videos/:id', (req, res) => {
   const { id } = req.params;
-  const { currentUserFullName, isAdmin } = req.body || {};
+  const { currentUserFullName, isAdmin, driveUrl } = req.body || {};
   const vid = studentVideosDB.find((v) => v.id === id);
-  if (!vid) return res.status(404).json({ error: 'Không tìm thấy video.' });
 
-  // Chặn học sinh xóa video của người khác: Chỉ Admin hoặc tác giả mới có quyền xóa
-  if (currentUserFullName !== undefined) {
+  // Chặn học sinh xóa video của người khác: Nếu KHÔNG PHẢI ADMIN thì chỉ tác giả mới có quyền xóa
+  const isUserAdmin = isAdmin === true;
+  if (!isUserAdmin && vid && currentUserFullName !== undefined) {
     const isOwner = vid.authorName === currentUserFullName;
-    if (!isAdmin && !isOwner) {
+    if (!isOwner) {
       return res.status(403).json({ error: 'Bạn không có quyền xóa tác phẩm của người khác!' });
+    }
+  }
+
+  // Quản trị viên (Admin) hoặc tác giả: Xóa video khỏi hệ thống
+  deletedVideoIds.add(id);
+  const targetDriveUrl = driveUrl || vid?.driveUrl;
+
+  // Nếu tệp được lưu cục bộ trong /uploads, xóa để giải phóng dung lượng
+  const localFile = vid?.videoUrl?.startsWith('/uploads/') ? vid.videoUrl : vid?.thumbnailUrl?.startsWith('/uploads/') ? vid.thumbnailUrl : null;
+  if (localFile) {
+    try {
+      const filePath = path.join(__dirname, 'public', localFile.replace(/^\//, ''));
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (e) {
+      console.warn('Could not unlink local uploaded file:', e);
     }
   }
 
   studentVideosDB = studentVideosDB.filter((v) => v.id !== id);
   saveLocalDB();
-  syncToGoogleSheets('deleteVideo', { id });
+  syncToGoogleSheets('deleteVideo', { id, driveUrl: targetDriveUrl });
   res.json({ success: true, message: 'Đã xóa tác phẩm thành công.' });
 });
 

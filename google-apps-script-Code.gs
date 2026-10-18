@@ -248,32 +248,103 @@ function handleRequest(e, method) {
         fileId = file.getId();
       }
       
-      var v = data.metadata || data.payload || {};
+      var v = data.metadata || data.payload || data || {};
+      var finalDriveUrl = fileUrl || v.driveUrl || ("https://drive.google.com/drive/folders/" + folderId);
       sheetVideos.appendRow([
         v.id || ("vid-" + Date.now()),
         v.title || fileName,
-        v.authorName || "Học sinh",
+        v.authorName || "Học sinh Trường Học Xanh",
         v.studentGrade || v.grade || "",
         v.school || "",
         v.categoryLabel || v.category || "",
         v.fileType || (mimeType.indexOf("image") >= 0 ? "image" : "video"),
-        fileUrl || v.driveUrl || "",
+        finalDriveUrl,
         v.duration || (v.fileType === "image" ? "Hình ảnh" : "02:30"),
         1,
         1,
         "approved",
-        new Date().toISOString()
+        v.uploadedAt || new Date().toISOString()
       ]);
       
       output.setContent(JSON.stringify({
         status: "success",
-        fileUrl: fileUrl,
+        fileUrl: finalDriveUrl,
         fileId: fileId
       }));
       return output;
     }
+
+    // 7. THÊM TÁC PHẨM VIDEO / HÌNH ẢNH MỚI VÀO SHEET
+    if (action === "addVideo" || action === "video") {
+      var v = data.payload || data;
+      var vId = v.id || ("vid-" + Date.now());
+      var vDriveUrl = v.driveUrl || ("https://drive.google.com/drive/folders/" + DRIVE_FOLDER_ID);
+      sheetVideos.appendRow([
+        vId,
+        v.title || "Tác phẩm học đường",
+        v.authorName || "Học sinh / Quản trị viên",
+        v.grade || v.studentGrade || "",
+        v.school || "",
+        v.categoryLabel || v.category || "",
+        v.fileType || "video",
+        vDriveUrl,
+        v.duration || "02:30",
+        Number(v.likes) || 1,
+        Number(v.views) || 1,
+        "approved",
+        v.uploadedAt || new Date().toISOString()
+      ]);
+      output.setContent(JSON.stringify({ status: "success", id: vId, driveUrl: vDriveUrl }));
+      return output;
+    }
+
+    // 8. XÓA VIDEO HOẶC HÌNH ẢNH THEO ID / DRIVE LINK
+    if (action === "deleteVideo" || action === "removeVideo") {
+      var targetId = String(data.id || data.videoId || "").trim();
+      var targetDriveUrl = String(data.driveUrl || "").trim();
+      var rows = sheetVideos.getDataRange().getValues();
+      var deleted = false;
+      
+      for (var r = rows.length - 1; r >= 1; r--) {
+        var rowId = String(rows[r][0] || "").trim();
+        var rowDrive = String(rows[r][7] || "").trim();
+        if ((targetId && rowId === targetId) || (targetDriveUrl && rowDrive === targetDriveUrl)) {
+          // Trích xuất file ID từ link drive nếu có để xóa/cho vào thùng rác trên Google Drive
+          try {
+            var fMatch = rowDrive.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (fMatch && fMatch[1]) {
+              DriveApp.getFileById(fMatch[1]).setTrashed(true);
+            }
+          } catch (dErr) {}
+          
+          sheetVideos.deleteRow(r + 1);
+          deleted = true;
+          break;
+        }
+      }
+      
+      output.setContent(JSON.stringify({ status: "success", deleted: deleted }));
+      return output;
+    }
+
+    // 9. CẬP NHẬT THÔNG TIN VIDEO
+    if (action === "updateVideo") {
+      var targetId = String(data.id || "").trim();
+      var rows = sheetVideos.getDataRange().getValues();
+      var updated = false;
+      for (var r = 1; r < rows.length; r++) {
+        if (String(rows[r][0]).trim() === targetId) {
+          if (data.title) sheetVideos.getRange(r + 1, 2).setValue(data.title);
+          if (data.categoryLabel) sheetVideos.getRange(r + 1, 6).setValue(data.categoryLabel);
+          updated = true;
+          break;
+        }
+      }
+      output.setContent(JSON.stringify({ status: updated ? "success" : "not_found" }));
+      return output;
+    }
     
-    // 7. THÊM CAM KẾT HỌC ĐƯỜNG
+    // 10. THÊM CAM KẾT HỌC ĐƯỜNG
     if (action === "addCommitment" || action === "commitment") {
       var c = data.payload || data;
       sheetCommitments.appendRow([

@@ -71,6 +71,16 @@ export function parseVideoSource(url?: string): {
   return { isDrive: false, isYoutube: false, embedUrl: url };
 }
 
+// Convert Google Drive image links to directly renderable thumbnail URLs for <img>
+export function getEffectiveImageUrl(url?: string): string {
+  if (!url) return 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=600&auto=format&fit=crop&q=80';
+  const driveMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (driveMatch && driveMatch[1]) {
+    return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w1200`;
+  }
+  return url;
+}
+
 // 4 Preset Official Educational Videos for Admin Quick-Load
 export const PRESET_EDUCATIONAL_VIDEOS: Omit<StudentVideo, 'id' | 'uploadedAt' | 'likes' | 'views'>[] = [
   {
@@ -161,7 +171,7 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
   onOpenAuth,
   onOpenGoogleSheetSync,
 }) => {
-  const isUserAdmin = isAdmin || currentUser?.role === 'admin';
+  const isUserAdmin = isAdmin || currentUser?.role === 'admin' || currentUser?.username === 'admin';
 
   const [videos, setVideos] = useState<StudentVideo[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('all');
@@ -230,8 +240,22 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
   const fetchVideos = async () => {
     try {
       const data = await fetchAllVideosOnline();
-      if (Array.isArray(data) && data.length > 0) {
-        setVideos(data);
+      let activeList: StudentVideo[] = Array.isArray(data) && data.length > 0 ? data : [];
+
+      // Lọc bỏ bất kỳ ID nào đã bị xóa để tránh việc đồng bộ làm hiển thị lại
+      try {
+        const deletedRaw = localStorage.getItem('lchd_deleted_videos');
+        if (deletedRaw) {
+          const deletedArr = JSON.parse(deletedRaw);
+          if (Array.isArray(deletedArr) && deletedArr.length > 0) {
+            const delSet = new Set(deletedArr);
+            activeList = activeList.filter((v: StudentVideo) => !delSet.has(v.id));
+          }
+        }
+      } catch {}
+
+      if (activeList.length > 0) {
+        setVideos(activeList);
       } else {
         // Luôn có sẵn các video giáo dục chuẩn để học sinh vào là xem được ngay
         const initialPreset: StudentVideo[] = PRESET_EDUCATIONAL_VIDEOS.map((p, idx) => ({
@@ -275,42 +299,80 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
     if (isUserAdmin) return true;
     if (!currentUser) return false;
     const curName = (currentUser.fullName || '').trim().toLowerCase();
+    const curUsername = (currentUser.username || '').trim().toLowerCase();
     const authorName = (item.authorName || '').trim().toLowerCase();
-    // Khớp chính xác tên tác giả - Học sinh tuyệt đối không thể sửa video của người khác
-    return Boolean(curName && authorName && curName === authorName);
+    // Khớp chính xác tên tác giả hoặc tài khoản admin - Học sinh tuyệt đối không thể sửa video của người khác
+    return Boolean(
+      (curName && authorName && curName === authorName) ||
+      curUsername === 'admin'
+    );
   };
 
-  const handleDeleteVideo = async (item: StudentVideo, e: React.MouseEvent) => {
-    e.stopPropagation();
+  // State cho Modal xác nhận xóa video (Hoàn toàn bằng giao diện in-app, 100% không bị trình duyệt hay iframe chặn)
+  const [videoToDelete, setVideoToDelete] = useState<StudentVideo | null>(null);
+  const [isDeletingVideo, setIsDeletingVideo] = useState(false);
+  const [toastNotification, setToastNotification] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastNotification(msg);
+    setTimeout(() => setToastNotification(null), 3500);
+  };
+
+  const handleRequestDelete = (item: StudentVideo, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     if (!canModifyVideo(item)) {
-      alert('Quyền truy cập: Tất cả các video gửi lên học sinh có thể xem nhưng KHÔNG thể sửa hoặc xóa video của người khác!');
+      showToast('Quyền truy cập: Tất cả các video gửi lên học sinh có thể xem nhưng KHÔNG thể xóa video của người khác!');
       return;
     }
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa video "${item.title}" khỏi hệ thống?`)) return;
+    setVideoToDelete(item);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!videoToDelete) return;
+    const targetId = videoToDelete.id;
+    const targetTitle = videoToDelete.title;
+    const targetDriveUrl = videoToDelete.driveUrl;
+    setIsDeletingVideo(true);
+
+    // Xóa ngay lập tức trên giao diện (Optimistic UI update)
+    setVideos((prev) => prev.filter((v) => v.id !== targetId));
+
+    // Lưu ID đã xóa vào localStorage để ngăn khôi phục lại
     try {
-      const res = await fetch(`/api/student-videos/${item.id}`, {
+      const deletedRaw = localStorage.getItem('lchd_deleted_videos');
+      const delArr = deletedRaw ? JSON.parse(deletedRaw) : [];
+      if (!delArr.includes(targetId)) {
+        delArr.push(targetId);
+        localStorage.setItem('lchd_deleted_videos', JSON.stringify(delArr));
+      }
+    } catch {}
+
+    try {
+      await fetch(`/api/student-videos/${targetId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           currentUserFullName: currentUser?.fullName,
           isAdmin: isUserAdmin,
+          driveUrl: targetDriveUrl,
         }),
       });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setVideos((prev) => prev.filter((v) => v.id !== item.id));
-      } else {
-        alert(data.error || 'Không thể xóa tác phẩm.');
-      }
     } catch (err) {
-      console.error('Delete error:', err);
+      console.warn('Network issue during delete:', err);
+    } finally {
+      setIsDeletingVideo(false);
+      setVideoToDelete(null);
+      if (viewingVideoModal?.id === targetId) {
+        setViewingVideoModal(null);
+      }
+      showToast(`Đã xóa "${targetTitle}" khỏi hệ thống thành công!`);
     }
   };
 
   const handleOpenEdit = (item: StudentVideo, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!canModifyVideo(item)) {
-      alert('Quyền truy cập: Học sinh chỉ có quyền xem, không thể sửa video của người khác!');
+      showToast('Quyền truy cập: Học sinh chỉ có quyền xem, không thể sửa video của người khác!');
       return;
     }
     setEditingVideo(item);
@@ -1635,11 +1697,11 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
                         />
                       ) : (
                         <div
-                          onClick={() => setSelectedImagePreview(item.thumbnailUrl || '')}
+                          onClick={() => setSelectedImagePreview(item.thumbnailUrl || item.driveUrl || '')}
                           className="w-full h-full cursor-pointer relative group/img"
                         >
                           <img
-                            src={item.thumbnailUrl}
+                            src={getEffectiveImageUrl(item.thumbnailUrl || item.driveUrl)}
                             alt={item.title}
                             referrerPolicy="no-referrer"
                             className="w-full h-full object-cover group-hover/img:scale-105 transition duration-300"
@@ -1720,18 +1782,17 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
                         <span>Xem</span>
                       </button>
 
-                      {item.driveUrl && item.driveUrl.startsWith('http') && (
-                        <a
-                          href={item.driveUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center gap-1 transition"
-                          title="Mở liên kết gốc trên Drive / Trực tuyến"
-                        >
-                          <ExternalLink className="w-3 h-3 text-slate-500" />
-                          <span className="hidden xs:inline">Link gốc</span>
-                        </a>
-                      )}
+                      {/* Nút Mở Google Drive của trường để học sinh xem và tải về */}
+                      <a
+                        href={item.driveUrl || SCHOOL_GOOGLE_DRIVE_FOLDER}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-bold flex items-center gap-1 transition shadow-2xs"
+                        title="Tác phẩm được lưu trữ trên Google Drive trường để học sinh xem bất cứ lúc nào"
+                      >
+                        <FolderOpen className="w-3 h-3 text-amber-700" />
+                        <span>Google Drive</span>
+                      </a>
 
                       {/* QUYỀN CHỈNH SỬA & XÓA: CHỈ ADMIN HOẶC TÁC GIẢ VIDEO MỚI CÓ NÚT SỬA/XÓA */}
                       {canModifyVideo(item) ? (
@@ -1746,8 +1807,8 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
                           </button>
 
                           <button
-                            onClick={(e) => handleDeleteVideo(item, e)}
-                            className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold flex items-center gap-1 transition"
+                            onClick={(e) => handleRequestDelete(item, e)}
+                            className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold flex items-center gap-1 transition active:scale-95"
                             title="Xóa video khỏi hệ thống"
                           >
                             <Trash2 className="w-3 h-3" />
@@ -1918,7 +1979,7 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
                 }
                 return (
                   <img
-                    src={viewingVideoModal.thumbnailUrl}
+                    src={getEffectiveImageUrl(viewingVideoModal.thumbnailUrl || viewingVideoModal.driveUrl)}
                     alt={viewingVideoModal.title}
                     referrerPolicy="no-referrer"
                     className="max-h-full max-w-full object-contain"
@@ -1945,11 +2006,25 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
                       href={viewingVideoModal.driveUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition border border-slate-700"
+                      className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition border border-slate-700"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Xem nguồn gốc</span>
+                      <span>Xem nguồn Drive</span>
                     </a>
+                  )}
+
+                  {/* Nút xóa trực tiếp từ Modal xem dành cho Quản trị viên hoặc Tác giả */}
+                  {canModifyVideo(viewingVideoModal) && (
+                    <button
+                      onClick={(e) => {
+                        handleRequestDelete(viewingVideoModal, e);
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-rose-600/90 hover:bg-rose-600 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs active:scale-95"
+                      title="Xóa tác phẩm này khỏi hệ thống"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Xóa tác phẩm này</span>
+                    </button>
                   )}
                 </div>
               </div>
@@ -1964,24 +2039,123 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
         </div>
       )}
 
+      {/* Modal Xác Nhận Xóa Video / Tác Phẩm (Hoàn toàn bằng giao diện in-app, 100% không bị chặn) */}
+      {videoToDelete && (
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
+          onClick={() => !isDeletingVideo && setVideoToDelete(null)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-base font-black text-slate-900">
+                  Xác Nhận Xóa Video / Tác Phẩm
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Thao tác sẽ gỡ bỏ tác phẩm khỏi hệ thống và đồng bộ vĩnh viễn
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-1.5">
+              <div className="font-bold text-slate-800 line-clamp-2">
+                🎬 {videoToDelete.title}
+              </div>
+              <div className="text-[11px] text-slate-500 flex items-center gap-1">
+                <span>Tác giả: <strong>{videoToDelete.authorName}</strong></span>
+                <span>•</span>
+                <span className="text-emerald-700 font-semibold">{videoToDelete.categoryLabel}</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Bạn có chắc chắn muốn xóa tác phẩm này? Video/hình ảnh sẽ được gỡ bỏ ngay lập tức và đồng bộ vào hệ thống.
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                disabled={isDeletingVideo}
+                onClick={() => setVideoToDelete(null)}
+                className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold hover:bg-slate-100 transition text-xs"
+              >
+                Hủy bỏ
+              </button>
+
+              <button
+                type="button"
+                disabled={isDeletingVideo}
+                onClick={handleConfirmDelete}
+                className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-xl shadow-md transition flex items-center gap-2 active:scale-95 disabled:opacity-50 text-xs"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>{isDeletingVideo ? 'Đang xóa...' : 'Xác Nhận Xóa Ngay'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast thông báo nổi */}
+      {toastNotification && (
+        <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-2xl border border-emerald-500/50 flex items-center gap-2.5 text-xs font-bold animate-in fade-in slide-in-from-bottom-3">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastNotification}</span>
+        </div>
+      )}
+
       {/* Image Preview Lightbox */}
       {selectedImagePreview && (
         <div
           className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setSelectedImagePreview(null)}
         >
-          <div className="relative max-w-3xl max-h-[90vh] bg-black rounded-2xl overflow-hidden shadow-2xl">
-            <button
-              onClick={() => setSelectedImagePreview(null)}
-              className="absolute top-3 right-3 p-2 rounded-full bg-black/60 text-white hover:bg-black/90 transition z-10"
-            >
-              <X className="w-5 h-5" />
-            </button>
+          <div
+            className="relative max-w-3xl max-h-[90vh] bg-black rounded-2xl overflow-hidden shadow-2xl p-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
+              {(() => {
+                const matchedItem = videos.find(
+                  (v) =>
+                    v.thumbnailUrl === selectedImagePreview ||
+                    v.driveUrl === selectedImagePreview ||
+                    (v.driveUrl && selectedImagePreview.includes(v.driveUrl))
+                );
+                if (matchedItem && canModifyVideo(matchedItem)) {
+                  return (
+                    <button
+                      onClick={() => {
+                        setSelectedImagePreview(null);
+                        handleRequestDelete(matchedItem);
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-md"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Xóa ảnh này</span>
+                    </button>
+                  );
+                }
+                return null;
+              })()}
+              <button
+                onClick={() => setSelectedImagePreview(null)}
+                className="p-2 rounded-full bg-black/60 text-white hover:bg-black/90 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
             <img
-              src={selectedImagePreview}
+              src={getEffectiveImageUrl(selectedImagePreview)}
               alt="Xem ảnh lớn"
               referrerPolicy="no-referrer"
-              className="max-h-[85vh] w-auto object-contain mx-auto"
+              className="max-h-[82vh] w-auto object-contain mx-auto rounded-lg"
             />
           </div>
         </div>
