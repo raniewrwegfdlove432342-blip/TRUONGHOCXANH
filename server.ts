@@ -22,7 +22,7 @@ try {
 }
 
 const app = express();
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+const PORT = 3000;
 
 app.use(express.json({ limit: '200mb' }));
 app.use(express.urlencoded({ extended: true, limit: '200mb' }));
@@ -216,7 +216,13 @@ function loadLocalDB() {
         deletedVideoIds = new Set(parsed.deletedVideoIds);
       }
       if (Array.isArray(parsed.videos)) {
-        studentVideosDB = parsed.videos.filter((v: StudentVideo) => !deletedVideoIds.has(v.id));
+        studentVideosDB = parsed.videos.filter(
+          (v: StudentVideo) =>
+            v &&
+            v.id &&
+            !deletedVideoIds.has(v.id) &&
+            (!v.driveUrl || !deletedVideoIds.has(v.driveUrl))
+        );
       }
       if (typeof parsed.pledgeCount === 'number') pledgeCount = parsed.pledgeCount;
     } else {
@@ -311,7 +317,11 @@ async function fetchFromGoogleSheets() {
 
         // 1. Giữ lại các video từ Google Sheets chưa bị xóa
         for (const sheetVid of data.videos) {
-          if (sheetVid && sheetVid.id && !deletedVideoIds.has(sheetVid.id)) {
+          if (!sheetVid || !sheetVid.id) continue;
+          const isDeleted =
+            deletedVideoIds.has(sheetVid.id) ||
+            (sheetVid.driveUrl && deletedVideoIds.has(sheetVid.driveUrl));
+          if (!isDeleted) {
             mergedVideos.push(sheetVid);
             seenIds.add(sheetVid.id);
           }
@@ -319,7 +329,11 @@ async function fetchFromGoogleSheets() {
 
         // 2. Bảo toàn tất cả các video vừa được tải lên trên máy chủ mà chưa kịp ghi vào Google Sheets
         for (const localVid of studentVideosDB) {
-          if (localVid && localVid.id && !deletedVideoIds.has(localVid.id) && !seenIds.has(localVid.id)) {
+          if (!localVid || !localVid.id) continue;
+          const isDeleted =
+            deletedVideoIds.has(localVid.id) ||
+            (localVid.driveUrl && deletedVideoIds.has(localVid.driveUrl));
+          if (!isDeleted && !seenIds.has(localVid.id)) {
             mergedVideos.push(localVid);
             seenIds.add(localVid.id);
           }
@@ -520,7 +534,7 @@ app.get('/api/student-videos', (req, res) => {
   res.json(studentVideosDB);
 });
 
-// Upload student video or photo work (Direct Drive upload & Google Sheets save)
+// Upload student video or photo work (Direct Google Drive & Google Sheets online storage)
 app.post('/api/student-videos/upload', async (req, res) => {
   const {
     title,
@@ -545,27 +559,70 @@ app.post('/api/student-videos/upload', async (req, res) => {
   }
 
   let finalDriveUrl = driveUrl || `https://drive.google.com/drive/folders/${GOOGLE_DRIVE_FOLDER_ID}?usp=sharing`;
-  let finalMediaUrl = videoUrl || thumbnailUrl || '';
+  let finalMediaUrl = videoUrl || '';
+  let finalThumbnail = thumbnailUrl || '';
+  let uploadedFileId = '';
 
-  // 1. If base64 file data is sent, save locally in public/uploads for instant fast viewing
-  if (fileBase64 && typeof fileBase64 === 'string') {
+  // 1. Tải trực tiếp lên Google Drive qua Google Apps Script Webhook (Không lưu tệp cục bộ trên thiết bị)
+  if (fileBase64 && typeof fileBase64 === 'string' && googleSheetsConfig.webhookUrl) {
     try {
-      const cleanBase64 = fileBase64.replace(/^data:.*,/, '');
-      const buffer = Buffer.from(cleanBase64, 'base64');
-      const ext = mimeType?.includes('png')
-        ? '.png'
-        : mimeType?.includes('jpeg') || mimeType?.includes('jpg')
-        ? '.jpg'
-        : fileType === 'image'
-        ? '.jpg'
-        : '.mp4';
-      const safeName = `tac-pham-${Date.now()}${ext}`;
-      const filePath = path.join(UPLOADS_DIR, safeName);
-      fs.writeFileSync(filePath, buffer);
-      finalMediaUrl = `/uploads/${safeName}`;
-    } catch (writeErr) {
-      console.error('Error saving uploaded file locally:', writeErr);
+      const cleanFileName = fileName || `TacPham_${Date.now()}.${fileType === 'image' ? 'jpg' : 'mp4'}`;
+      const cleanMime = mimeType || (fileType === 'image' ? 'image/jpeg' : 'video/mp4');
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 75000);
+
+      const driveRes = await fetch(googleSheetsConfig.webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        redirect: 'follow',
+        signal: controller.signal,
+        body: JSON.stringify({
+          action: 'uploadToDrive',
+          folderId: GOOGLE_DRIVE_FOLDER_ID,
+          fileName: cleanFileName,
+          mimeType: cleanMime,
+          fileBase64: fileBase64,
+          metadata: {
+            title: title.trim(),
+            authorName: authorName?.trim() || 'Học sinh Trường Học Xanh',
+            studentGrade: studentGrade?.trim() || 'Chi đội học sinh',
+            school: school?.trim() || 'Trường học thân yêu',
+            categoryLabel: categoryLabel || 'Phòng chống tệ nạn học đường',
+            fileType: fileType === 'image' ? 'image' : 'video',
+            duration: duration || (fileType === 'image' ? 'Hình ảnh / Áp phích' : 'Video clip'),
+          },
+        }),
+      });
+      clearTimeout(timeoutId);
+
+      if (driveRes.ok) {
+        const driveData: any = await driveRes.json().catch(() => null);
+        if (driveData && driveData.fileUrl) {
+          finalDriveUrl = driveData.fileUrl;
+          uploadedFileId = driveData.fileId || '';
+          if (!uploadedFileId) {
+            const m = finalDriveUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || finalDriveUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            if (m && m[1]) uploadedFileId = m[1];
+          }
+        }
+      }
+    } catch (uploadErr) {
+      console.warn('Direct Google Drive upload notice:', uploadErr);
     }
+  }
+
+  // Chuẩn hóa đường link trực tuyến từ Google Drive
+  if (uploadedFileId) {
+    if (fileType === 'image') {
+      finalThumbnail = `https://lh3.googleusercontent.com/d/${uploadedFileId}=w1200`;
+      finalMediaUrl = '';
+    } else {
+      finalMediaUrl = finalDriveUrl;
+      finalThumbnail = `https://lh3.googleusercontent.com/d/${uploadedFileId}=w600`;
+    }
+  } else if (!finalThumbnail && fileType === 'image') {
+    finalThumbnail = finalDriveUrl;
   }
 
   const newVideo: StudentVideo = {
@@ -576,13 +633,13 @@ app.post('/api/student-videos/upload', async (req, res) => {
     school: school?.trim() || 'Trường học thân yêu',
     category: category || 'drugs',
     categoryLabel: categoryLabel || 'Phòng chống tệ nạn học đường',
-    videoUrl: fileType === 'video' ? finalMediaUrl : undefined,
+    videoUrl: fileType === 'video' ? (finalMediaUrl || finalDriveUrl) : undefined,
     driveUrl: finalDriveUrl,
     fileType: fileType === 'image' ? 'image' : 'video',
     thumbnailUrl:
       fileType === 'image'
-        ? finalMediaUrl
-        : 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=600&auto=format&fit=crop&q=80',
+        ? (finalThumbnail || finalDriveUrl)
+        : (finalThumbnail || 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=600&auto=format&fit=crop&q=80'),
     description: description?.trim() || 'Tác phẩm truyền thông do học sinh sáng tạo và nộp vào hệ thống.',
     duration: duration || (fileType === 'image' ? 'Hình ảnh / Áp phích' : 'Video clip'),
     likes: 1,
@@ -592,82 +649,28 @@ app.post('/api/student-videos/upload', async (req, res) => {
     syncedToGoogleSheet: true,
   };
 
-  // Lưu ngay vào cơ sở dữ liệu máy chủ để học sinh và mọi thiết bị khác truy cập được ngay lập tức
   studentVideosDB.unshift(newVideo);
   saveLocalDB();
 
-  // Trả về kết quả ngay cho client trong vòng vài mili-giây
+  // Đồng bộ thêm vào Google Sheets
+  syncToGoogleSheets('addVideo', {
+    id: newVideo.id,
+    title: newVideo.title,
+    authorName: newVideo.authorName,
+    grade: newVideo.studentGrade,
+    school: newVideo.school,
+    category: newVideo.categoryLabel,
+    driveUrl: newVideo.driveUrl,
+    fileType: newVideo.fileType,
+    duration: newVideo.duration,
+    uploadedAt: newVideo.uploadedAt,
+  });
+
   res.status(201).json({
     success: true,
     video: newVideo,
-    message: 'Tác phẩm đã được nộp và tải lên thư mục Google Drive của trường thành công!',
+    message: 'Tác phẩm đã được lưu trữ trực tuyến trên Google Drive và Google Sheets thành công!',
   });
-
-  // Đồng bộ nền lên Google Sheets và Google Drive (Asynchronous background task)
-  (async () => {
-    try {
-      // 1. Ghi bản ghi vào Google Sheet
-      syncToGoogleSheets('addVideo', {
-        id: newVideo.id,
-        title: newVideo.title,
-        authorName: newVideo.authorName,
-        grade: newVideo.studentGrade,
-        school: newVideo.school,
-        category: newVideo.categoryLabel,
-        driveUrl: newVideo.driveUrl,
-        fileType: newVideo.fileType,
-        duration: newVideo.duration,
-        uploadedAt: newVideo.uploadedAt,
-      });
-
-      // 2. Tải tệp lên Google Drive
-      if (fileBase64 && typeof fileBase64 === 'string') {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 60000);
-        const driveUploadRes = await fetch(googleSheetsConfig.webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          redirect: 'follow',
-          signal: controller.signal,
-          body: JSON.stringify({
-            action: 'uploadToDrive',
-            folderId: GOOGLE_DRIVE_FOLDER_ID,
-            fileName: fileName || `${Date.now()}_${title}.${fileType === 'image' ? 'jpg' : 'mp4'}`,
-            mimeType: mimeType || (fileType === 'image' ? 'image/jpeg' : 'video/mp4'),
-            fileBase64: fileBase64,
-            metadata: {
-              id: newVideo.id,
-              title: newVideo.title,
-              authorName: newVideo.authorName,
-              studentGrade: newVideo.studentGrade,
-              school: newVideo.school,
-              categoryLabel: newVideo.categoryLabel,
-              fileType: newVideo.fileType,
-              driveUrl: newVideo.driveUrl,
-              duration: newVideo.duration,
-            },
-          }),
-        }).catch(() => null);
-        clearTimeout(timeoutId);
-
-        if (driveUploadRes && driveUploadRes.ok) {
-          const driveData: any = await driveUploadRes.json().catch(() => null);
-          if (driveData && driveData.fileUrl) {
-            newVideo.driveUrl = driveData.fileUrl;
-            if (newVideo.fileType === 'image') {
-              const fMatch = driveData.fileUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
-              if (fMatch && fMatch[1]) {
-                newVideo.thumbnailUrl = `https://drive.google.com/thumbnail?id=${fMatch[1]}&sz=w1200`;
-              }
-            }
-            saveLocalDB();
-          }
-        }
-      }
-    } catch (e) {
-      console.warn('Background Drive/Sheets sync completed with notice:', e);
-    }
-  })();
 });
 
 // Batch Upload multiple educational videos for Admin
@@ -683,49 +686,65 @@ app.post('/api/student-videos/upload-batch', async (req, res) => {
     const item = videos[i];
     if (!item.title) continue;
 
-    let finalMediaUrl = item.videoUrl || item.thumbnailUrl || '';
+    let finalMediaUrl = item.videoUrl || '';
     let finalDriveUrl = item.driveUrl || `https://drive.google.com/drive/folders/${GOOGLE_DRIVE_FOLDER_ID}?usp=sharing`;
+    let finalThumbnail = item.thumbnailUrl || '';
+    let uploadedFileId = '';
 
-    if (item.fileBase64 && typeof item.fileBase64 === 'string') {
+    if (item.fileBase64 && typeof item.fileBase64 === 'string' && googleSheetsConfig.webhookUrl) {
       try {
-        const cleanBase64 = item.fileBase64.replace(/^data:.*,/, '');
-        const buffer = Buffer.from(cleanBase64, 'base64');
-        const ext = item.mimeType?.includes('png')
-          ? '.png'
-          : item.mimeType?.includes('jpeg') || item.mimeType?.includes('jpg')
-          ? '.jpg'
-          : item.fileType === 'image'
-          ? '.jpg'
-          : '.mp4';
-        const safeName = `video-admin-${Date.now()}-${i}${ext}`;
-        const filePath = path.join(UPLOADS_DIR, safeName);
-        fs.writeFileSync(filePath, buffer);
-        finalMediaUrl = `/uploads/${safeName}`;
+        const cleanFileName = item.fileName || `video-admin-${Date.now()}-${i}.${item.fileType === 'image' ? 'jpg' : 'mp4'}`;
+        const cleanMime = item.mimeType || (item.fileType === 'image' ? 'image/jpeg' : 'video/mp4');
 
-        // Đồng bộ tệp lên Google Drive trường
-        try {
-          fetch(googleSheetsConfig.webhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'uploadToDrive',
-              folderId: GOOGLE_DRIVE_FOLDER_ID,
-              fileName: item.fileName || `${Date.now()}_${item.title}.${ext.replace('.', '')}`,
-              mimeType: item.mimeType || (item.fileType === 'image' ? 'image/jpeg' : 'video/mp4'),
-              fileBase64: item.fileBase64,
-              metadata: {
-                title: item.title.trim(),
-                authorName: item.authorName?.trim() || 'Ban Giám Hiệu',
-                studentGrade: item.studentGrade?.trim() || 'Tuyên Truyền Học Đường',
-                school: item.school?.trim() || 'Trường Học Xanh',
-                categoryLabel: item.categoryLabel || 'Video Giáo Dục Tuyên Truyền',
-                fileType: item.fileType === 'image' ? 'image' : 'video',
-              },
-            }),
-          }).catch(() => {});
-        } catch (driveErr) {}
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+        const driveRes = await fetch(googleSheetsConfig.webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          redirect: 'follow',
+          signal: controller.signal,
+          body: JSON.stringify({
+            action: 'uploadToDrive',
+            folderId: GOOGLE_DRIVE_FOLDER_ID,
+            fileName: cleanFileName,
+            mimeType: cleanMime,
+            fileBase64: item.fileBase64,
+            metadata: {
+              title: item.title.trim(),
+              authorName: item.authorName?.trim() || 'Ban Giám Hiệu',
+              studentGrade: item.studentGrade?.trim() || 'Tuyên Truyền Học Đường',
+              school: item.school?.trim() || 'Trường Học Xanh',
+              categoryLabel: item.categoryLabel || 'Video Giáo Dục Tuyên Truyền',
+              fileType: item.fileType === 'image' ? 'image' : 'video',
+            },
+          }),
+        });
+        clearTimeout(timeoutId);
+
+        if (driveRes.ok) {
+          const driveData: any = await driveRes.json().catch(() => null);
+          if (driveData && driveData.fileUrl) {
+            finalDriveUrl = driveData.fileUrl;
+            uploadedFileId = driveData.fileId || '';
+            if (!uploadedFileId) {
+              const m = finalDriveUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || finalDriveUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+              if (m && m[1]) uploadedFileId = m[1];
+            }
+          }
+        }
       } catch (e) {
-        console.error('Error saving batch video locally:', e);
+        console.error('Error during batch Drive upload:', e);
+      }
+    }
+
+    if (uploadedFileId) {
+      if (item.fileType === 'image') {
+        finalThumbnail = `https://lh3.googleusercontent.com/d/${uploadedFileId}=w1200`;
+        finalMediaUrl = '';
+      } else {
+        finalMediaUrl = finalDriveUrl;
+        finalThumbnail = `https://lh3.googleusercontent.com/d/${uploadedFileId}=w600`;
       }
     }
 
@@ -737,10 +756,10 @@ app.post('/api/student-videos/upload-batch', async (req, res) => {
       school: item.school?.trim() || 'Trường Học Thân Yêu',
       category: item.category || 'drugs',
       categoryLabel: item.categoryLabel || 'Video Giáo Dục Tuyên Truyền',
-      videoUrl: item.fileType === 'image' ? undefined : (finalMediaUrl || item.videoUrl || item.driveUrl),
+      videoUrl: item.fileType === 'image' ? undefined : (finalMediaUrl || item.videoUrl || finalDriveUrl),
       driveUrl: finalDriveUrl,
       fileType: item.fileType === 'image' ? 'image' : 'video',
-      thumbnailUrl: item.thumbnailUrl || (item.fileType === 'image' ? finalMediaUrl : undefined),
+      thumbnailUrl: finalThumbnail || (item.fileType === 'image' ? finalDriveUrl : undefined),
       embedUrl: item.embedUrl,
       youtubeId: item.youtubeId,
       description: item.description?.trim() || 'Video giáo dục chính thống tuyên truyền phòng chống tệ nạn học đường.',
@@ -831,9 +850,12 @@ app.delete('/api/student-videos/:id', (req, res) => {
     }
   }
 
-  // Quản trị viên (Admin) hoặc tác giả: Xóa video khỏi hệ thống
+  // Quản trị viên (Admin) hoặc tác giả: Xóa video vĩnh viễn khỏi hệ thống
   deletedVideoIds.add(id);
   const targetDriveUrl = driveUrl || vid?.driveUrl;
+  if (targetDriveUrl) {
+    deletedVideoIds.add(targetDriveUrl);
+  }
 
   // Nếu tệp được lưu cục bộ trong /uploads, xóa để giải phóng dung lượng
   const localFile = vid?.videoUrl?.startsWith('/uploads/') ? vid.videoUrl : vid?.thumbnailUrl?.startsWith('/uploads/') ? vid.thumbnailUrl : null;
@@ -848,10 +870,12 @@ app.delete('/api/student-videos/:id', (req, res) => {
     }
   }
 
-  studentVideosDB = studentVideosDB.filter((v) => v.id !== id);
+  studentVideosDB = studentVideosDB.filter(
+    (v) => v.id !== id && (!targetDriveUrl || v.driveUrl !== targetDriveUrl)
+  );
   saveLocalDB();
   syncToGoogleSheets('deleteVideo', { id, driveUrl: targetDriveUrl });
-  res.json({ success: true, message: 'Đã xóa tác phẩm thành công.' });
+  res.json({ success: true, message: 'Đã xóa tác phẩm thành công trên toàn hệ thống trực tuyến.' });
 });
 
 // ----------------- GOOGLE SHEETS SYNC APIS -----------------

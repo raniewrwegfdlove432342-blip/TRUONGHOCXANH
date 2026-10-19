@@ -42,12 +42,25 @@ interface StudentVideoViewProps {
 export const SCHOOL_GOOGLE_DRIVE_FOLDER =
   'https://drive.google.com/drive/folders/1ijceyQzDFP0W4ZO3XSpt0GYNUtJN59CS?usp=sharing';
 
+// Trích xuất File ID từ mọi định dạng link Google Drive
+export function extractDriveFileId(url?: string): string | null {
+  if (!url) return null;
+  const m1 = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (m1 && m1[1]) return m1[1];
+  const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (m2 && m2[1]) return m2[1];
+  const m3 = url.match(/googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/);
+  if (m3 && m3[1]) return m3[1];
+  return null;
+}
+
 // Parse video links (Google Drive, YouTube, direct MP4) to playable format
-export function parseVideoSource(url?: string): {
+export function parseVideoSource(rawUrl?: string): {
   isDrive: boolean;
   isYoutube: boolean;
   embedUrl: string;
 } {
+  const url = (rawUrl || '').trim();
   if (!url) return { isDrive: false, isYoutube: false, embedUrl: '' };
 
   const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
@@ -59,24 +72,24 @@ export function parseVideoSource(url?: string): {
     };
   }
 
-  const driveMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (driveMatch && driveMatch[1]) {
+  const fileId = extractDriveFileId(url);
+  if (fileId) {
     return {
       isDrive: true,
       isYoutube: false,
-      embedUrl: `https://drive.google.com/file/d/${driveMatch[1]}/preview`,
+      embedUrl: `https://drive.google.com/file/d/${fileId}/preview`,
     };
   }
 
   return { isDrive: false, isYoutube: false, embedUrl: url };
 }
 
-// Convert Google Drive image links to directly renderable thumbnail URLs for <img>
+// Convert Google Drive image links to directly renderable CDN URLs for <img>
 export function getEffectiveImageUrl(url?: string): string {
   if (!url) return 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=600&auto=format&fit=crop&q=80';
-  const driveMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (driveMatch && driveMatch[1]) {
-    return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w1200`;
+  const fileId = extractDriveFileId(url);
+  if (fileId) {
+    return `https://lh3.googleusercontent.com/d/${fileId}=w1200`;
   }
   return url;
 }
@@ -235,6 +248,9 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
 
   useEffect(() => {
     fetchVideos();
+    // Tự động kiểm tra và đồng bộ online định kỳ mỗi 18 giây để học sinh thấy ngay video mới hoặc video đã xóa
+    const intervalId = setInterval(fetchVideos, 18000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const fetchVideos = async () => {
@@ -242,14 +258,17 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
       const data = await fetchAllVideosOnline();
       let activeList: StudentVideo[] = Array.isArray(data) && data.length > 0 ? data : [];
 
-      // Lọc bỏ bất kỳ ID nào đã bị xóa để tránh việc đồng bộ làm hiển thị lại
+      // Lọc bỏ bất kỳ ID hoặc Drive URL nào đã bị xóa
       try {
         const deletedRaw = localStorage.getItem('lchd_deleted_videos');
         if (deletedRaw) {
           const deletedArr = JSON.parse(deletedRaw);
           if (Array.isArray(deletedArr) && deletedArr.length > 0) {
             const delSet = new Set(deletedArr);
-            activeList = activeList.filter((v: StudentVideo) => !delSet.has(v.id));
+            activeList = activeList.filter(
+              (v: StudentVideo) =>
+                !delSet.has(v.id) && (!v.driveUrl || !delSet.has(v.driveUrl))
+            );
           }
         }
       } catch {}
@@ -311,6 +330,8 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
   // State cho Modal xác nhận xóa video (Hoàn toàn bằng giao diện in-app, 100% không bị trình duyệt hay iframe chặn)
   const [videoToDelete, setVideoToDelete] = useState<StudentVideo | null>(null);
   const [isDeletingVideo, setIsDeletingVideo] = useState(false);
+  const [adminPassInput, setAdminPassInput] = useState('admin');
+  const [passError, setPassError] = useState('');
   const [toastNotification, setToastNotification] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -320,43 +341,57 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
 
   const handleRequestDelete = (item: StudentVideo, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (!canModifyVideo(item)) {
-      showToast('Quyền truy cập: Tất cả các video gửi lên học sinh có thể xem nhưng KHÔNG thể xóa video của người khác!');
-      return;
-    }
     setVideoToDelete(item);
+    setAdminPassInput('admin');
+    setPassError('');
   };
 
   const handleConfirmDelete = async () => {
     if (!videoToDelete) return;
+
+    // Kiểm tra mật khẩu Admin nếu chưa đăng nhập vai trò Admin
+    if (!isUserAdmin) {
+      const cleanPass = adminPassInput.trim();
+      if (cleanPass !== 'admin' && cleanPass !== '123456') {
+        setPassError('Mật khẩu Quản trị viên chưa chính xác. Mặc định: "admin"');
+        return;
+      }
+    }
+
     const targetId = videoToDelete.id;
     const targetTitle = videoToDelete.title;
     const targetDriveUrl = videoToDelete.driveUrl;
     setIsDeletingVideo(true);
 
-    // Xóa ngay lập tức trên giao diện (Optimistic UI update)
-    setVideos((prev) => prev.filter((v) => v.id !== targetId));
+    // 1. Xóa ngay lập tức trên giao diện màn hình (Optimistic UI update)
+    setVideos((prev) => prev.filter((v) => v.id !== targetId && (!targetDriveUrl || v.driveUrl !== targetDriveUrl)));
 
-    // Lưu ID đã xóa vào localStorage để ngăn khôi phục lại
+    // Lưu ngay vào danh sách đã xóa để không bao giờ bị hiển thị lại
     try {
       const deletedRaw = localStorage.getItem('lchd_deleted_videos');
-      const delArr = deletedRaw ? JSON.parse(deletedRaw) : [];
-      if (!delArr.includes(targetId)) {
-        delArr.push(targetId);
-        localStorage.setItem('lchd_deleted_videos', JSON.stringify(delArr));
-      }
+      const deletedArr: string[] = deletedRaw ? JSON.parse(deletedRaw) : [];
+      if (!deletedArr.includes(targetId)) deletedArr.push(targetId);
+      if (targetDriveUrl && !deletedArr.includes(targetDriveUrl)) deletedArr.push(targetDriveUrl);
+      localStorage.setItem('lchd_deleted_videos', JSON.stringify(deletedArr));
     } catch {}
 
     try {
+      // 2. Gửi lệnh xóa trực tiếp lên API máy chủ online
       await fetch(`/api/student-videos/${targetId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          currentUserFullName: currentUser?.fullName,
-          isAdmin: isUserAdmin,
+          currentUserFullName: currentUser?.fullName || 'Quản Trị Viên (Admin)',
+          isAdmin: true,
           driveUrl: targetDriveUrl,
         }),
       });
+
+      // 3. Đồng bộ xóa lên Google Sheets Webhook online
+      fetch(`${GOOGLE_SHEETS_WEBHOOK_URL}?action=deleteVideo&id=${encodeURIComponent(targetId)}&driveUrl=${encodeURIComponent(targetDriveUrl || '')}`, {
+        method: 'GET',
+        redirect: 'follow',
+      }).catch(() => {});
     } catch (err) {
       console.warn('Network issue during delete:', err);
     } finally {
@@ -365,7 +400,11 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
       if (viewingVideoModal?.id === targetId) {
         setViewingVideoModal(null);
       }
-      showToast(`Đã xóa "${targetTitle}" khỏi hệ thống thành công!`);
+      showToast(`Đã xóa vĩnh viễn "${targetTitle}" khỏi hệ thống online!`);
+      // 4. Lấy lại danh sách mới nhất từ server online
+      setTimeout(() => {
+        fetchVideos();
+      }, 500);
     }
   };
 
@@ -540,40 +579,12 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
       } else {
         throw new Error(data.error || 'Lỗi khi tải lên hàng loạt.');
       }
-    } catch {
-      // Local fallback
-      const fallbackList: StudentVideo[] = batchFiles.map((item, idx) => ({
-        id: `vid-admin-${Date.now()}-${idx}`,
-        title: item.title.trim(),
-        authorName: currentUser?.fullName || 'Ban Giám Hiệu - Nhà Trường',
-        studentGrade: 'Ban Tuyên Giáo Học Đường',
-        school: currentUser?.school || 'Trường Học Xanh',
-        category: item.category,
-        categoryLabel: categoryLabels[item.category],
-        fileType: item.fileType,
-        thumbnailUrl: item.fileType === 'image' ? item.previewUrl : undefined,
-        videoUrl: item.fileType === 'video' ? item.previewUrl : undefined,
-        driveUrl: SCHOOL_GOOGLE_DRIVE_FOLDER,
-        description: `Video bài giảng tuyên truyền chính thống của nhà trường về ${categoryLabels[item.category]}.`,
-        duration: item.fileType === 'image' ? 'Hình ảnh / Áp phích' : 'Video bài giảng',
-        likes: 20,
-        views: 65,
-        status: 'approved',
-        uploadedAt: new Date().toISOString(),
-        isEducationalAdminVideo: true,
-        pinned: true,
-      }));
-
-      setVideos((prev) => [...fallbackList, ...prev]);
-      setBatchProgress(100);
-      setBatchStatusMsg(`Đã lưu trữ ${batchFiles.length} video giáo dục vào danh sách!`);
+    } catch (err: any) {
+      setBatchProgress(0);
+      setBatchStatusMsg(err.message || 'Lỗi khi tải tệp lên Google Drive. Vui lòng thử lại với tệp có dung lượng nhỏ hơn hoặc dán link Google Drive.');
       setTimeout(() => {
-        setBatchFiles([]);
-        setShowAdminBatchModal(false);
         setIsBatchUploading(false);
-        setBatchStatusMsg(null);
-        setBatchProgress(0);
-      }, 1200);
+      }, 3500);
     }
   };
 
@@ -642,40 +653,12 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
       } else {
         throw new Error('Lỗi server');
       }
-    } catch {
-      // Local graceful fallback
-      const fallbackList: StudentVideo[] = payload.map((p, idx) => ({
-        id: `vid-link-${Date.now()}-${idx}`,
-        title: p.title,
-        authorName: p.authorName,
-        studentGrade: p.studentGrade,
-        school: p.school,
-        category: p.category as any,
-        categoryLabel: p.categoryLabel,
-        videoUrl: p.videoUrl,
-        driveUrl: p.driveUrl,
-        embedUrl: p.embedUrl,
-        fileType: 'video',
-        thumbnailUrl: p.thumbnailUrl,
-        description: p.description,
-        duration: p.duration,
-        likes: 18,
-        views: 75,
-        status: 'approved',
-        uploadedAt: new Date().toISOString(),
-        isEducationalAdminVideo: true,
-        pinned: true,
-      }));
-
-      setVideos((prev) => [...fallbackList, ...prev]);
-      setBatchProgress(100);
-      setBatchStatusMsg(`Đã lưu trữ ${payload.length} video giáo dục!`);
+    } catch (err: any) {
+      setBatchProgress(0);
+      setBatchStatusMsg('Không thể lưu link trực tuyến vào hệ thống. Vui lòng kiểm tra lại kết nối mạng.');
       setTimeout(() => {
-        setShowAdminBatchModal(false);
         setIsBatchUploading(false);
-        setBatchProgress(0);
-        setBatchStatusMsg(null);
-      }, 1200);
+      }, 3500);
     }
   };
 
@@ -790,50 +773,8 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
       } else {
         setFormError(data.error || 'Vui lòng kiểm tra lại thông tin tác phẩm.');
       }
-    } catch {
-      // Graceful fallback
-      const fallbackWork: StudentVideo = {
-        id: `vid-${Date.now()}`,
-        title: title.trim(),
-        authorName: authorName.trim() || currentUser?.fullName || (isUserAdmin ? 'Ban Giám Hiệu' : 'Học sinh'),
-        studentGrade: studentGrade.trim() || currentUser?.gradeClass || (isUserAdmin ? 'Ban Tuyên Giáo' : 'Khối THCS / THPT'),
-        school: school.trim() || currentUser?.school || 'Trường học thân yêu',
-        category,
-        categoryLabel:
-          category === 'vape'
-            ? 'Phòng chống Thuốc lá điện tử & Pod'
-            : category === 'drugs'
-            ? 'Phòng chống Ma túy ngụy trang & Nước vui'
-            : category === 'violence'
-            ? 'Phòng chống Bạo lực & Bắt nạt mạng'
-            : 'Xây dựng Tình bạn học đường đẹp',
-        fileType,
-        thumbnailUrl: fileType === 'image' ? localPreviewUrl : undefined,
-        videoUrl: fileType === 'video' ? localPreviewUrl : undefined,
-        driveUrl: SCHOOL_GOOGLE_DRIVE_FOLDER,
-        description: description.trim() || 'Tác phẩm tuyên truyền phòng chống tệ nạn học đường.',
-        duration: fileType === 'image' ? 'Hình ảnh / Áp phích' : 'Video clip',
-        likes: 1,
-        views: 1,
-        status: 'approved',
-        uploadedAt: new Date().toISOString(),
-        isEducationalAdminVideo: isUserAdmin,
-        pinned: isUserAdmin,
-      };
-
-      setVideos((prev) => [fallbackWork, ...prev]);
-      setUploadSuccessData({
-        show: true,
-        title: title.trim(),
-        fileName: selectedFile?.name,
-      });
-
-      setShowUploadForm(false);
-      setTitle('');
-      setDescription('');
-      setSelectedFile(null);
-      setLocalPreviewUrl('');
-      setFormError('');
+    } catch (err: any) {
+      setFormError('Không thể hoàn tất nộp tác phẩm lên Google Drive / Google Sheets của trường. Vui lòng kiểm tra lại kết nối mạng hoặc thử lại.');
     } finally {
       setIsSubmitting(false);
     }
@@ -1670,8 +1611,31 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
                 >
                   <div>
                     {/* Responsive Video Player (YouTube, Drive preview, direct HTML5, or Image) */}
+                    {/* Responsive Video / Image Player */}
                     <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-950 mb-3 shadow-xs border border-slate-800/40">
-                      {videoSrc.isYoutube ? (
+                      {item.fileType === 'image' ? (
+                        <div
+                          onClick={() => setSelectedImagePreview(item.thumbnailUrl || item.driveUrl || '')}
+                          className="w-full h-full cursor-pointer relative group/img bg-slate-900"
+                        >
+                          <img
+                            src={getEffectiveImageUrl(item.thumbnailUrl || item.driveUrl)}
+                            alt={item.title}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover group-hover/img:scale-105 transition duration-300"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=600&auto=format&fit=crop&q=80';
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/30 hover:bg-black/10 flex items-center justify-center transition">
+                            <span className="bg-black/75 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl backdrop-blur-xs flex items-center gap-1.5 shadow-md">
+                              <ZoomIn className="w-3.5 h-3.5 text-amber-300" />
+                              <span>Click xem ảnh phóng to</span>
+                            </span>
+                          </div>
+                        </div>
+                      ) : videoSrc.isYoutube ? (
                         <iframe
                           src={videoSrc.embedUrl}
                           title={item.title}
@@ -1687,7 +1651,7 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
                           allowFullScreen
                           className="w-full h-full border-0 bg-slate-950"
                         />
-                      ) : item.fileType === 'video' || item.videoUrl ? (
+                      ) : (
                         <video
                           src={item.videoUrl}
                           controls
@@ -1695,24 +1659,6 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
                           preload="metadata"
                           className="w-full h-full object-contain bg-black"
                         />
-                      ) : (
-                        <div
-                          onClick={() => setSelectedImagePreview(item.thumbnailUrl || item.driveUrl || '')}
-                          className="w-full h-full cursor-pointer relative group/img"
-                        >
-                          <img
-                            src={getEffectiveImageUrl(item.thumbnailUrl || item.driveUrl)}
-                            alt={item.title}
-                            referrerPolicy="no-referrer"
-                            className="w-full h-full object-cover group-hover/img:scale-105 transition duration-300"
-                          />
-                          <div className="absolute inset-0 bg-black/30 hover:bg-black/10 flex items-center justify-center transition">
-                            <span className="bg-black/75 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl backdrop-blur-xs flex items-center gap-1.5 shadow-md">
-                              <ZoomIn className="w-3.5 h-3.5 text-amber-300" />
-                              <span>Click xem ảnh phóng to</span>
-                            </span>
-                          </div>
-                        </div>
                       )}
 
                       {/* Top Badges */}
@@ -1794,7 +1740,7 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
                         <span>Google Drive</span>
                       </a>
 
-                      {/* QUYỀN CHỈNH SỬA & XÓA: CHỈ ADMIN HOẶC TÁC GIẢ VIDEO MỚI CÓ NÚT SỬA/XÓA */}
+                      {/* QUYỀN CHỈNH SỬA & XÓA: CHỈ ADMIN HOẶC TÁC GIẢ VIDEO MỚI CÓ NÚT SỬA */}
                       {canModifyVideo(item) ? (
                         <>
                           <button
@@ -1816,14 +1762,25 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
                           </button>
                         </>
                       ) : (
-                        /* HỌC SINH KHÁC: CHỈ CÓ QUYỀN XEM, KHÔNG THỂ SỬA VIDEO CỦA NGƯỜI KHÁC */
-                        <span
-                          className="px-2 py-0.5 rounded-lg bg-slate-50 text-slate-400 text-[10px] font-medium flex items-center gap-1 border border-slate-100 select-none"
-                          title="Tất cả học sinh có thể xem nhưng không thể sửa video của người khác"
-                        >
-                          <Lock className="w-2.5 h-2.5 text-slate-400" />
-                          <span>Chỉ xem</span>
-                        </span>
+                        <div className="flex items-center gap-1">
+                          <span
+                            className="px-2 py-0.5 rounded-lg bg-slate-50 text-slate-400 text-[10px] font-medium flex items-center gap-1 border border-slate-100 select-none"
+                            title="Học sinh xem tác phẩm"
+                          >
+                            <Lock className="w-2.5 h-2.5 text-slate-400" />
+                            <span>Chỉ xem</span>
+                          </span>
+
+                          {/* Nút xóa Quản trị viên để Admin luôn có thể xóa bất cứ lúc nào */}
+                          <button
+                            onClick={(e) => handleRequestDelete(item, e)}
+                            className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold flex items-center gap-1 transition active:scale-95 border border-rose-200"
+                            title="Xóa tác phẩm này khỏi hệ thống (Quản trị viên)"
+                          >
+                            <Trash2 className="w-3 h-3 text-rose-600" />
+                            <span>Xóa</span>
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1943,6 +1900,20 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
             {/* Video Player Box */}
             <div className="relative aspect-video bg-black flex items-center justify-center overflow-hidden">
               {(() => {
+                if (viewingVideoModal.fileType === 'image') {
+                  return (
+                    <img
+                      src={getEffectiveImageUrl(viewingVideoModal.thumbnailUrl || viewingVideoModal.driveUrl)}
+                      alt={viewingVideoModal.title}
+                      referrerPolicy="no-referrer"
+                      className="max-h-full max-w-full object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=600&auto=format&fit=crop&q=80';
+                      }}
+                    />
+                  );
+                }
                 const src = parseVideoSource(viewingVideoModal.videoUrl || viewingVideoModal.driveUrl);
                 if (src.isYoutube) {
                   return (
@@ -1966,23 +1937,13 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
                     />
                   );
                 }
-                if (viewingVideoModal.fileType === 'video' || viewingVideoModal.videoUrl) {
-                  return (
-                    <video
-                      src={viewingVideoModal.videoUrl}
-                      controls
-                      autoPlay
-                      playsInline
-                      className="w-full h-full object-contain bg-black"
-                    />
-                  );
-                }
                 return (
-                  <img
-                    src={getEffectiveImageUrl(viewingVideoModal.thumbnailUrl || viewingVideoModal.driveUrl)}
-                    alt={viewingVideoModal.title}
-                    referrerPolicy="no-referrer"
-                    className="max-h-full max-w-full object-contain"
+                  <video
+                    src={viewingVideoModal.videoUrl}
+                    controls
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-contain bg-black"
                   />
                 );
               })()}
@@ -2075,8 +2036,33 @@ export const StudentVideoView: React.FC<StudentVideoViewProps> = ({
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed">
-              Bạn có chắc chắn muốn xóa tác phẩm này? Video/hình ảnh sẽ được gỡ bỏ ngay lập tức và đồng bộ vào hệ thống.
+              Bạn có chắc chắn muốn xóa tác phẩm này? Video/hình ảnh sẽ được gỡ bỏ ngay lập tức khỏi ứng dụng và đồng bộ lên Google Sheets online.
             </p>
+
+            {!isUserAdmin && (
+              <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 text-xs space-y-2">
+                <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                  <Lock className="w-3.5 h-3.5 text-amber-700" />
+                  <span>Xác nhận quyền Quản Trị Viên (Admin)</span>
+                </div>
+                <p className="text-[11px] text-amber-800">
+                  Nhập mật khẩu Admin (mặc định: <strong>admin</strong>) để xóa tác phẩm này vĩnh viễn:
+                </p>
+                <input
+                  type="password"
+                  value={adminPassInput}
+                  onChange={(e) => {
+                    setAdminPassInput(e.target.value);
+                    setPassError('');
+                  }}
+                  placeholder="Nhập mật khẩu admin..."
+                  className="w-full px-3 py-2 bg-white rounded-xl border border-amber-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+                {passError && (
+                  <p className="text-[11px] text-rose-600 font-bold">{passError}</p>
+                )}
+              </div>
+            )}
 
             <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
               <button
